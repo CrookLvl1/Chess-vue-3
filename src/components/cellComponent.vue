@@ -12,6 +12,7 @@ const props = defineProps({
     soloPlay: { type: Boolean, required: true },
     colorDown: { type: String as PropType<ChessColor>, required: true },
     lastTurn: { type: [Object, null] as PropType<Turn | null>, required: true },
+    rotate: { type: Boolean, required: true }
 })
 let bg = computed<CellColor>(() => {
     const cell = props.cell;
@@ -48,10 +49,10 @@ let bg = computed<CellColor>(() => {
                 (soloPlay || turn === colorDown) ||
                 cell.getHint() ? 'pointer' : 'default'
     }">
-        <FigureComponent v-if="cell.getFigure()" :figure="cell.getFigure()" />
+        <FigureComponent :style="{'transform': rotate ?'rotate(180deg)' : ''}" v-if="cell.getFigure()" :figure="cell.getFigure()" />
         <!-- <div>{{ cell.getCoords() }}</div> -->
         <div class="hint" v-show="cell.getHint()">
-            <div class="circle" :class="{'cell-attacked': !cell.isFree()}">
+            <div class="circle" :class="{ 'cell-attacked': !cell.isFree() }">
             </div>
         </div>
     </li>
@@ -61,11 +62,11 @@ let bg = computed<CellColor>(() => {
 .cell-wrapper {
     position: relative;
     display: block;
-    padding: min(1%, 10px);
+    padding: 1%;
     box-sizing: border-box;
     width: 12.5%;
     height: 100%;
-    transition: none 100ms ease-out;
+    transition: all 100ms ease-out;
     transition-property: background-color;
     transition-property: box-shadow;
 }

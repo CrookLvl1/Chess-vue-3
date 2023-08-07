@@ -4,16 +4,34 @@ import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <header>
-    
-  </header>
-  <RouterView class="main-wrapper" />
-  <footer>
+  <main class="main-screen-wrapper">
+    <header>
+    </header>
+    <RouterView class="main-wrapper" />
+    <footer>
 
-  </footer>
+    </footer>
+  </main>
 </template>
 
 <style lang="scss">
+@media (max-width: 1024px) {
+  .main-screen-wrapper {
+    height: 100dvh;
+    box-sizing: border-box;
+  }
+}
+
+.main-screen-wrapper {
+  max-width: 1024px;
+  margin: 0 auto;
+  width: 100dvw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 0;
+}
+
 body,
 ul,
 li,
@@ -34,7 +52,7 @@ body {
 
 html {
   font-size: 14px;
-  font-family:Arial, Helvetica, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 @media (max-width: 968px) {
@@ -82,4 +100,5 @@ html {
     padding: 5px 10px;
     font-size: 2rem;
   }
-}</style>
+}
+</style>

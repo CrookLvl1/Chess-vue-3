@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { useLanguageStrings } from '@/stores/language';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
+import { useAppInfo } from '@/stores/appInfo';
 import { ref } from 'vue';
 
 const emit = defineEmits(['send']);
@@ -16,7 +17,7 @@ const reset = () => {
 
 }
 
-const chose = (time:number) => {
+const chose = (time: number) => {
     emit('send', false, time);
     searching.value = true;
     console.log(searching.value)
@@ -24,7 +25,7 @@ const chose = (time:number) => {
 </script>
 
 <template>
-    <div class="main-screen-wrapper">
+    <div class="menu-wrapper">
         <div class="play-type-buttons">
             <template v-if="!multiplayer">
                 <button class="classic-button" @click="emit('send', true, 100); multiplayer = false;">
@@ -35,7 +36,9 @@ const chose = (time:number) => {
             <template v-else>
                 <template v-if="searching">
                     <div class="loading">
-                        123
+                        <div class="text">{{ textStrings.searching }}...</div>
+                        <div class="circle"></div>
+                        <div class="circle"></div>
                         <div class="circle"></div>
                         <div class="circle"></div>
                         <div class="circle"></div>
@@ -56,24 +59,66 @@ const chose = (time:number) => {
 </template>
 
 <style lang="scss" scoped>
+@keyframes fadeAnimation {
+    0% {
+        opacity: 100%;
+        transform: translateY(0%);
+    }
 
-@media (max-width: 1024px) {
-    .main-screen-wrapper {
-        height: 100dvh;
-        box-sizing: border-box;
+    25% {
+        opacity: 50%;
+        transform: translateY(-15%);
+    }
+
+    50% {
+        opacity: 0%;
+        transform: translateY(-30%);
+    }
+
+    75% {
+        opacity: 50%;
+        transform: translateY(-15%);
+    }
+
+    100% {
+        opacity: 100%;
+        transform: translateY(0%);
     }
 }
 
-.main-screen-wrapper {
-    max-width: 1024px;
-    width: 100dvw;
-    background-color: rgba(98, 112, 126, 1);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    // justify-content: center;
+.menu-wrapper {
     padding: 50px 0;
+    background-color: rgba(98, 112, 126, 1);
+
 }
+.loading {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+
+    .text {
+        font-size: 2rem;
+    }
+
+    .circle {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background-color: rgb(255, 255, 255);
+        transform: translateZ(0);
+
+        @for $i from 2 through 6 {
+            &:nth-child(#{$i}) {
+                animation: fadeAnimation 1s linear #{150 * $i}ms infinite;
+            }
+        }
+
+    }
+}
+
+
 
 
 .play-type-buttons {
@@ -90,4 +135,4 @@ const chose = (time:number) => {
     // align-items: center;
 
 }
-</style>
+</style>@/stores/appInfo

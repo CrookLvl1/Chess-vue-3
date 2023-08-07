@@ -1,13 +1,12 @@
 import { defineStore } from 'pinia'
 import { computed, ref, reactive } from 'vue'
+import { useAppInfo } from './appInfo';
 import type { LanguageStrings, LanguageId } from '@/class/chessTypes&Interfaces';
 
 
 
 export const useLanguageStrings = defineStore('language', () => {
-    let id = ref<LanguageId>('ru');
-    const setId = (newId: LanguageId) => id.value = newId;
-
+    let id = computed(() => useAppInfo().getLangId);
 
 
 
@@ -24,6 +23,7 @@ export const useLanguageStrings = defineStore('language', () => {
             surrender: 'Сдаться',
             whiteTurn: 'Ход белых',
             blackTurn: 'Ход чёрных',
+            searching: 'Поиск игры'
         },
         eng: {
             choose: "Choose figure",
@@ -37,6 +37,7 @@ export const useLanguageStrings = defineStore('language', () => {
             surrender: 'Surrender',
             whiteTurn: `White's turn`,
             blackTurn: `Black's turn`,
+            searching: 'Searching for game'
         }
     })
 
@@ -46,5 +47,5 @@ export const useLanguageStrings = defineStore('language', () => {
     })
 
 
-    return { id, getStrings, setId }
+    return { id, getStrings }
 })

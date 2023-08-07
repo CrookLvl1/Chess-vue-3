@@ -21,5 +21,7 @@ const href = computed<string>(() => paths.get(props.figure?.getSrc()));
 img {
     width: 100%;
     height: 100%;
+    transition: transform 300ms cubic-bezier(.89, .01, .12, 1.04);
+
 }
 </style>

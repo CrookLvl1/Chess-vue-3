@@ -11,6 +11,9 @@ import { Player } from '@/class/player';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
 import GameEndComponent from '@/components/gameEndComponent.vue';
 import { useLanguageStrings } from '@/stores/language';
+import { useAppInfo } from '@/stores/appInfo';
+
+const settingsStore = useAppInfo();
 
 const props = defineProps({
     soloPlay: {
@@ -34,7 +37,7 @@ const player = computed<Player>(() => props.player);
 const enemyPlayer = computed<Player>(() => props.enemyPlayer);
 let result = ref<GameState>('default');
 
-let soundVolume = ref<number>(0.25);
+let soundVolume = computed(() => settingsStore.getVolume);
 const audioHrefs = useAudioPaths().paths;
 
 
@@ -268,7 +271,7 @@ if (colorDown.value === 'black') switchRotateUser();
                 <ul class="row">
                     <template v-for="cell, columnIndex in rowArr" :key="cell">
 
-                        <CellComponentVue :last-turn="lastTurn" :style="{ transform: rotate ? 'rotate(180deg)' : '' }"
+                        <CellComponentVue :rotate="rotate" :last-turn="lastTurn"
                             :color-down="colorDown" :solo-play="soloPlay" :turn="turn" :cell="cell" :data-row="rowIndex"
                             :data-column="columnIndex" />
 
@@ -315,15 +318,9 @@ if (colorDown.value === 'black') switchRotateUser();
 
 }
 
-.rotate-second {
-    transform: rotate(360deg);
-}
-
 .rotate-first {
     transform: rotate(180deg);
 }
-
-
 
 .chess-container {
     display: flex;
@@ -354,4 +351,4 @@ if (colorDown.value === 'black') switchRotateUser();
     }
 
 }
-</style>
+</style>@/stores/appInfo
