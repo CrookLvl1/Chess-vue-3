@@ -1,42 +1,58 @@
 <script lang="ts" setup>
-import FigureComponent from './figureComponent.vue';
-import { Cell, type CellColor, type ChessColor, ChessField, type Turn } from '../class/chess'
-import { reactive, type PropType } from 'vue';
+import FigureComponent from '@/components/figureComponent.vue';
+import { type CellColor, type ChessColor, type Turn } from '@/class/chessTypes&Interfaces'
+import { type PropType, computed } from 'vue';
+import { Cell } from '@/class/chess';
+
 
 
 const props = defineProps({
     cell: { type: Object as PropType<Cell>, required: true },
-    width: { type: Number, required: true },
     turn: { type: String as PropType<ChessColor>, required: true },
     soloPlay: { type: Boolean, required: true },
     colorDown: { type: String as PropType<ChessColor>, required: true },
-    lastTurn: { type: [Object, null] as PropType<Turn | null>, required: true }
+    lastTurn: { type: [Object, null] as PropType<Turn | null>, required: true },
 })
+let bg = computed<CellColor>(() => {
+    const cell = props.cell;
 
-let bg: CellColor = (props.cell.getCoords().reduce((a, b) => a + b)) % 2 ? '#7c573e' : '#908782';
+    let bg: CellColor = (cell.getCoords().reduce((a, b) => a + b)) % 2 ? '#7c573e' : '#908782';
 
-// if (props.cell.getSelected()) bg =  
-// const cell = reactive(props.cell)
+    const lastTurn = props.lastTurn;
+    const coords = cell.getCoords();
+    if (lastTurn?.fromRow === coords[0] && lastTurn?.fromColumn === coords[1] ||
+        lastTurn?.toRow === coords[0] && lastTurn?.toColumn === coords[1]) {
+        //~lightgreen color
+        bg = '#90955a';
+    }
+
+
+    //~lightcoral color
+    else if (cell.getChecked()) bg = '#d17363';
+
+    //~(red - orange) color
+    else if (cell.isSelected()) bg = '#b18f4f';
+
+    return bg;
+});
+
+
 </script>
 
 <template>
     <li class="cell-wrapper" :style="{
-        // backgroundColor: bg,
-        backgroundColor: 'rgba(189, 150, 93, .8)',
-        width: width + 'px',
-        height: width + 'px',
+        backgroundColor: bg,
+        boxShadow: cell.isSelected() ? `0 0 50px 0 ${bg}` : '',
         cursor:
-            !cell.isFree() &&
-                turn === cell.getFigure()?.getColor() &&
+            turn === cell.getFigure()?.getColor() &&
                 (soloPlay || turn === colorDown) ||
-                cell.getHint() ?
-                'pointer' : 'default'
-
+                cell.getHint() ? 'pointer' : 'default'
     }">
         <FigureComponent v-if="cell.getFigure()" :figure="cell.getFigure()" />
         <!-- <div>{{ cell.getCoords() }}</div> -->
         <div class="hint" v-show="cell.getHint()">
-            <div class="circle" :style="!cell.isFree() && { backgroundColor: 'lightcoral', opacity: '47.5%' } || ''"></div>
+            <div class="circle" :class="{'cell-attacked': !cell.isFree()}">
+            </div>
         </div>
     </li>
 </template>
@@ -45,10 +61,18 @@ let bg: CellColor = (props.cell.getCoords().reduce((a, b) => a + b)) % 2 ? '#7c5
 .cell-wrapper {
     position: relative;
     display: block;
-    padding: 10px;
+    padding: min(1%, 10px);
     box-sizing: border-box;
-    background-color: rgba(189, 150, 93, .1);
+    width: 12.5%;
+    height: 100%;
+    transition: none 100ms ease-out;
+    transition-property: background-color;
+    transition-property: box-shadow;
+}
 
+.cell-attacked {
+    background-color: lightcoral;
+    box-shadow: 0 0 0 7.5px lightcoral;
 }
 
 
@@ -66,8 +90,8 @@ let bg: CellColor = (props.cell.getCoords().reduce((a, b) => a + b)) % 2 ? '#7c5
 
     .circle {
         position: absolute;
-        width: 12.5px;
-        height: 12.5px;
+        width: min(10%);
+        height: min(10%);
         background-color: #414e5b;
         border-radius: 50%;
         opacity: 50%;

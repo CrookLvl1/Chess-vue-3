@@ -1,9 +1,11 @@
 {
+  "type": "module",
   "name": "first-vite-project",
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "vite",
+    "server": "node src/web-socket-server/server",
+    "dev": "vite --host",
     "build": "run-p type-check build-only",
     "preview": "vite preview",
     "build-only": "vite build",

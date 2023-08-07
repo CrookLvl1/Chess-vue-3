@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { Figure } from '@/class/chess';
-import { onUpdated, type PropType } from 'vue';
-import { useImagePaths } from '@/stores/imagePaths';
+import { type PropType, computed, watch} from 'vue';
+import { useImagePaths } from '@/stores/paths';
 
 const props = defineProps({
     figure: { type: [Object, null] as PropType<Figure | null>, required: true }
@@ -10,7 +10,7 @@ const props = defineProps({
 
 
 const { paths } = useImagePaths();
-const href = paths.get(props.figure?.getSrc());
+const href = computed<string>(() => paths.get(props.figure?.getSrc()));
 
 </script>
 <template>

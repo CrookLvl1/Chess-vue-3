@@ -1,14 +1,22 @@
 <script lang="ts" setup>
-import { type ChessFigure, type ChessColor, Figure } from '@/class/chess';
-import FigureComponent from './figureComponent.vue';
+import { Figure } from '@/class/chess';
+import { type ChessFigure, type ChessColor } from '@/class/chessTypes&Interfaces';
+import FigureComponent from '@/components/figureComponent.vue';
 import type { PropType } from 'vue';
+import { computed } from 'vue';
+import { useLanguageStrings } from '@/stores/language';
 
 const figures: Array<ChessFigure> = ['queen', 'bishop', 'knight', 'rook'];
+const emit = defineEmits(['changeFigure']);
+
+
+const choose = computed(() => useLanguageStrings().getStrings.choose);
+
 
 const props = defineProps({
-    color: { type: Object as PropType<ChessColor>, required: true },
-    row: {type: Number, required: true},
-    column: {type: Number, required: true}
+    color: { type: String as PropType<ChessColor>, required: true },
+    row: { type: Number, required: true },
+    column: { type: Number, required: true }
 })
 
 const handleClick = (ev: MouseEvent) => {
@@ -19,7 +27,9 @@ const handleClick = (ev: MouseEvent) => {
 
     if (target.tagName === 'UL') return;
 
+    const type = target.dataset.type as ChessFigure;
 
+    emit('changeFigure', type);
 
 
 }
@@ -27,37 +37,54 @@ const handleClick = (ev: MouseEvent) => {
 </script>
 
 <template>
-    <div class="choose-menu">
+    <div class="choose-menu-wrapper">
+        <h3>{{ choose }}:</h3>
         <ul @click="handleClick">
-            <li class="-figure-">
-                <FigureComponent :figure="new Figure(`bishop${color}.png`, color, 'bishop')" />
+            <li data-type="bishop" class="-figure-">
+                <FigureComponent :figure="new Figure(color, 'bishop')" />
             </li>
-            <li class="-figure-">
-                <FigureComponent :figure="new Figure(`knight${color}.png`, color, 'knight')" />
+            <li data-type="knight" class="-figure-">
+                <FigureComponent :figure="new Figure(color, 'knight')" />
             </li>
-            <li class="-figure-">
-                <FigureComponent :figure="new Figure(`rook${color}.png`, color, 'rook')" />
+            <li data-type="rook" class="-figure-">
+                <FigureComponent :figure="new Figure(color, 'rook')" />
             </li>
-            <li class="-figure-">
-                <FigureComponent :figure="new Figure(`queen${color}.png`, color, 'queen')" />
+            <li data-type="queen" class="-figure-">
+                <FigureComponent :figure="new Figure(color, 'queen')" />
             </li>
         </ul>
     </div>
 </template>
 
 <style lang="scss" scoped>
-.choose-menu {
+.choose-menu-wrapper {
     display: flex;
-    padding: 10px 20px;
+    top: 0;
+    left: 0;
     background-color: #476f58;
     width: fit-content;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    justify-content: space-between;
 }
 
 ul {
+    display: flex;
+    gap: 20px;
+
     .-figure- {
-        width: 50px;
-        height: 50px;
+        $size: calc(40px + (90 - 40) * ((100vw - 320px) / (1024 - 320)));
+        width: $size;
+        height: $size;
+        max-width: 80px;
+        max-height: 80px;
         display: block;
+        cursor: pointer;
+        &:hover {
+            background-color: rgb(60, 139, 72);
+        }
     }
 }
 </style>
