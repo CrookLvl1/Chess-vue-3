@@ -59,12 +59,6 @@ const genRandomSound = (hrefs: Array<string>): () => void => {
 const playChessSound = genRandomSound(audioHrefs);
 
 let color = computed<ChessColor>(() => player.value.getColor());
-let rotate = computed<boolean>(() => color.value === 'black');
-let rotateUser = ref<boolean>(false)
-
-watch(rotateUser, (current) => {
-    console.log(current);
-})
 
 
 const field = reactive(new ChessField(props.soloPlay, color.value));
@@ -143,7 +137,7 @@ console.log(handleEvents.value)
 
 const userClickHandler = (ev: MouseEvent) => {
     if (!handleEvents.value || ev.button !== 0) return;
-    if (rotateUser.value) switchRotateUser();
+    if (rotate.value && colorDown.value === 'white' || !rotate.value && colorDown.value === 'black') switchRotateUser();
     let target = ev.target as HTMLElement;
 
 
@@ -253,8 +247,11 @@ watch((leftEnemy), (current) => {
 })
 
 const switchRotateUser = () => {
-    rotateUser.value = !rotateUser.value;
+    rotate.value = !rotate.value;
 }
+
+let rotate = ref<boolean>(false);
+if (colorDown.value === 'black') switchRotateUser();
 
 </script>
 
@@ -264,19 +261,15 @@ const switchRotateUser = () => {
             :color="multiplayerStore.leaveLose ? enemyPlayer.getColor() : turn" :result="result" />
         <PlayerComponent @rotate="switchRotateUser" @timeend="result = 'checkmate'" v-if="enemyPlayer"
             :player-obj="(enemyPlayer as Player)" />
-        <ul id="chessField" class="chess-outer-list" @click="userClickHandler" :class="{
-            'rotate-first': rotate,
-            'rotate-second': rotateUser
-        }">
+        <ul id="chessField" class="chess-outer-list" @click="userClickHandler"
+            :style="{ transform: rotate ? 'rotate(180deg)' : '' }">
 
             <template v-for="rowArr, rowIndex in field.getCells()" :key="rowArr">
                 <ul class="row">
                     <template v-for="cell, columnIndex in rowArr" :key="cell">
 
-                        <CellComponentVue :last-turn="lastTurn" :class="{
-                            'rotate-first': rotate,
-                            'rotate-second': rotateUser
-                        }" :color-down="colorDown" :solo-play="soloPlay" :turn="turn" :cell="cell" :data-row="rowIndex"
+                        <CellComponentVue :last-turn="lastTurn" :style="{ transform: rotate ? 'rotate(180deg)' : '' }"
+                            :color-down="colorDown" :solo-play="soloPlay" :turn="turn" :cell="cell" :data-row="rowIndex"
                             :data-column="columnIndex" />
 
                     </template>
@@ -322,13 +315,15 @@ const switchRotateUser = () => {
 
 }
 
-.rotate-first {
-    transform: rotate(-180deg);
+.rotate-second {
+    transform: rotate(360deg);
 }
 
-.rotate-second {
-    transform: rotate(-180deg);
+.rotate-first {
+    transform: rotate(180deg);
 }
+
+
 
 .chess-container {
     display: flex;
@@ -343,7 +338,7 @@ const switchRotateUser = () => {
     flex-direction: column;
     user-select: none;
     box-shadow: 0 0 10px 2px;
-    transition: all 1000ms cubic-bezier(.89, .01, .12, 1.04);
+    transition: all 300ms cubic-bezier(.89, .01, .12, 1.04);
 
 
     .row {

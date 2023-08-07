@@ -111,19 +111,16 @@ wss.on("connection", (ws, req) => {
     }
     const id = nextId++;
     ws.id = id;
-    console.log(req.url);
-
-    const time = getPropFromUrl(req.url, 'time=');
-    players[time].push(ws);
-
 
     console.log('connected', id);
+
+    const time = getPropFromUrl(req.url, 'time=');
+    
+    players[time].push(ws);
 
     if (players[time].length > 1) {
         createRoom(time);
     }
-
-    console.log(players[time].length);
 
     ws.on('close', () => {
         players[time].splice(players[time].findIndex(playerWs => playerWs === ws), 1);
