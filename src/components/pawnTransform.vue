@@ -2,15 +2,11 @@
 import { Figure } from '@/class/chess';
 import { type ChessFigure, type ChessColor } from '@/class/chessTypes&Interfaces';
 import FigureComponent from '@/components/figureComponent.vue';
+import { useAppSettings } from '@/stores/appSettings';
 import type { PropType } from 'vue';
-import { computed } from 'vue';
-import { useLanguageStrings } from '@/stores/language';
 
 const figures: Array<ChessFigure> = ['queen', 'bishop', 'knight', 'rook'];
 const emit = defineEmits(['changeFigure']);
-
-
-const choose = computed(() => useLanguageStrings().getStrings.choose);
 
 
 const props = defineProps({
@@ -37,9 +33,10 @@ const handleClick = (ev: MouseEvent) => {
 </script>
 
 <template>
-    <div class="choose-menu-wrapper">
-        <h3>{{ choose }}:</h3>
-        <ul @click="handleClick">
+        <ul @click="handleClick" class="choose-menu-wrapper">
+            <li>
+                <h3>{{ useAppSettings().getStrings.choose }}:</h3>
+            </li>
             <li data-type="bishop" class="-figure-">
                 <FigureComponent :figure="new Figure(color, 'bishop')" />
             </li>
@@ -53,38 +50,48 @@ const handleClick = (ev: MouseEvent) => {
                 <FigureComponent :figure="new Figure(color, 'queen')" />
             </li>
         </ul>
-    </div>
 </template>
 
 <style lang="scss" scoped>
+// $size: calc(40px + (80 - 40) * ((100vw - 320px) / (1024 - 320)));
+
 .choose-menu-wrapper {
     display: flex;
     top: 0;
     left: 0;
-    background-color: #476f58;
-    width: fit-content;
     position: absolute;
-    width: 100%;
-    height: 100%;
     z-index: 10;
-    justify-content: space-between;
-}
-
-ul {
-    display: flex;
-    gap: 20px;
-
-    .-figure- {
-        $size: calc(40px + (90 - 40) * ((100vw - 320px) / (1024 - 320)));
-        width: $size;
-        height: $size;
-        max-width: 80px;
-        max-height: 80px;
-        display: block;
-        cursor: pointer;
-        &:hover {
-            background-color: rgb(60, 139, 72);
-        }
+    height: 100%;
+    background-color: rgba(53, 90, 126, 0.9);
+    align-items: center;
+    box-sizing: border-box;
+    padding: 0 20px;
+    // gap: 0.75rem;
+    transition: all 250ms ease-out;
+    h3 {
+        font-size: 1.5rem;
     }
 }
+
+
+
+.-figure- {
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    padding: 1%;
+    box-sizing: border-box;
+
+    // background-color: rgb(107, 142, 62);
+    display: block;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 250ms ease-out;
+
+
+    &:hover {
+        background-color: rgb(200, 212, 103);
+        box-shadow: 0 0 10px 0 rgb(200, 212, 103);
+    }
+}
+
 </style>

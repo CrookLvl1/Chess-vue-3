@@ -1,138 +1,101 @@
 <script lang="ts" setup>
-import { useLanguageStrings } from '@/stores/language';
+import SearchingComp from '@/components/searchingComp.vue'
+import { useAppSettings } from '@/stores/appSettings';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
-import { useAppInfo } from '@/stores/appInfo';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
-const emit = defineEmits(['send']);
-const textStrings = useLanguageStrings().getStrings;
+const multiplayerStore = useMultiplayerStore();
+const textStrings = computed(() => useAppSettings().getStrings);
 
-let multiplayer = ref<boolean>(false);
+let startScreen = ref<boolean>(true);
 let searching = ref<boolean>(false);
 
-const reset = () => {
-    multiplayer.value = false;
-    searching.value = false;
-    useMultiplayerStore().disconnectServer();
+const emit = defineEmits({
+    'initGame': (solo: boolean, time: number) => true
+})
 
+
+const reset = () => {
+    searching.value = false;
+    startScreen.value = true;
+    multiplayerStore.disconnectServer();
 }
 
-const chose = (time: number) => {
-    emit('send', false, time);
+const initMultiplayerGame = (time: number) => {
     searching.value = true;
-    console.log(searching.value)
+    emit('initGame', false, time);
 }
 </script>
 
 <template>
-    <div class="menu-wrapper">
-        <div class="play-type-buttons">
-            <template v-if="!multiplayer">
-                <button class="classic-button" @click="emit('send', true, 100); multiplayer = false;">
-                    {{ textStrings.playSolo }}</button>
-                <button class="classic-button" @click="multiplayer = true">
-                    {{ textStrings.playMultiplayer }}</button>
+    <div class="play-type-buttons">
+
+        <template v-if="startScreen">
+            <button class="classic-button start-game-button" @click="emit('initGame', true, 5999)">
+                {{ textStrings.playSolo }}</button>
+            <button class="classic-button start-game-button" @click="startScreen = false">
+                {{ textStrings.playMultiplayer }}</button>
+        </template>
+
+        <template v-else>
+            <template v-if="!searching">
+                <div class="buttons-row">
+                    <button class="classic-button" @click="initMultiplayerGame(60)">1</button>
+                    <button class="classic-button" @click="initMultiplayerGame(120)">2</button>
+                    <button class="classic-button" @click="initMultiplayerGame(180)">3</button>
+                </div>
+                <div class="buttons-row">
+                    <button class="classic-button" @click="initMultiplayerGame(300)">5</button>
+                    <button class="classic-button" @click="initMultiplayerGame(600)">10</button>
+                    <button class="classic-button" @click="initMultiplayerGame(1200)">20</button>
+                </div>
             </template>
-            <template v-else>
-                <template v-if="searching">
-                    <div class="loading">
-                        <div class="text">{{ textStrings.searching }}...</div>
-                        <div class="circle"></div>
-                        <div class="circle"></div>
-                        <div class="circle"></div>
-                        <div class="circle"></div>
-                        <div class="circle"></div>
-                    </div>
-                </template>
-                <template v-else>
-                    <button class="classic-button" @click="chose(60)">1</button>
-                    <button class="classic-button" @click="chose(120)">2</button>
-                    <button class="classic-button" @click="chose(180)">3</button>
-                    <button class="classic-button" @click="chose(300)">5</button>
-                    <button class="classic-button" @click="chose(600)">10</button>
-                    <button class="classic-button" @click="chose(1200)">20</button>
-                </template>
-                <button class="classic-button" @click="reset">{{ textStrings.returnButton }}</button>
-            </template>
-        </div>
+            <SearchingComp v-else :text="textStrings.searching" />
+            <button class="classic-button reset-button" @click="reset">{{ textStrings.returnButton }}</button>
+        </template>
+
     </div>
 </template>
 
 <style lang="scss" scoped>
-@keyframes fadeAnimation {
-    0% {
-        opacity: 100%;
-        transform: translateY(0%);
-    }
+.start-game-button {
+    width: 33%;
+    min-width: fit-content;
 
-    25% {
-        opacity: 50%;
-        transform: translateY(-15%);
-    }
-
-    50% {
-        opacity: 0%;
-        transform: translateY(-30%);
-    }
-
-    75% {
-        opacity: 50%;
-        transform: translateY(-15%);
-    }
-
-    100% {
-        opacity: 100%;
-        transform: translateY(0%);
+    @media (max-width: 600px) {
+        width: fit-content;
     }
 }
-
-.menu-wrapper {
-    padding: 50px 0;
-    background-color: rgba(98, 112, 126, 1);
-
-}
-.loading {
-    display: flex;
-    width: 100%;
-    justify-content: center;
-    gap: 1rem;
-    padding: 1rem;
-
-    .text {
-        font-size: 2rem;
-    }
-
-    .circle {
-        width: 2rem;
-        height: 2rem;
-        border-radius: 50%;
-        background-color: rgb(255, 255, 255);
-        transform: translateZ(0);
-
-        @for $i from 2 through 6 {
-            &:nth-child(#{$i}) {
-                animation: fadeAnimation 1s linear #{150 * $i}ms infinite;
-            }
-        }
-
-    }
-}
-
-
 
 
 .play-type-buttons {
     display: flex;
-    // justify-content: space-between;
-    gap: 20px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding-top: 10rem;
 
-    button {
-        width: 100%;
-
+    .reset-button {
+        width: 33%;
     }
+
+    .buttons-row {
+        display: flex;
+        justify-content: space-evenly;
+
+        button {
+            width: 25%;
+        }
+
+        width: 100%;
+        gap: 1rem;
+    }
+
+    // justify-content: space-between;
+    margin-top: 2rem;
+    gap: 3rem;
 
     // align-items: center;
 
 }
-</style>@/stores/appInfo
+</style>

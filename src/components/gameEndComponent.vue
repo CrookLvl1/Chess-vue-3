@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import type { GameState } from '@/class/chessTypes&Interfaces';
-import type { PropType } from 'vue';
+import { type PropType, computed } from 'vue';
 import type { ChessColor } from '@/class/chessTypes&Interfaces';
-import { useLanguageStrings } from '@/stores/language';
+import { useAppSettings } from '@/stores/appSettings';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
 
 const props = defineProps({
@@ -10,22 +10,27 @@ const props = defineProps({
         type: String as PropType<GameState>,
         required: true
     },
-    color: {
+    winner: {
         type: String as PropType<ChessColor>,
         required: true,
     },
+    reason: {
+        type: String,
+        required: false,
+    }
 })
 
 const emit = defineEmits(['gameOver']);
-emit('gameOver');
-const languageText = useLanguageStrings().getStrings;
-let text: string;
+const textStrings = useAppSettings().getStrings;
+const multiplayerStore = useMultiplayerStore();
+const player = computed(() => multiplayerStore.getPlayer)
+const enemyPlayer = computed(() => multiplayerStore.getEnemyPlayer)
 
-if (props.result === 'checkmate') {
-    text = languageText[`${props.color === 'black' ? 'white' : 'black'}Win`]
-} else {
-    text = languageText.draw;
-}
+
+if (player.value.getStarted()) player.value.stop();
+if (enemyPlayer.value.getStarted()) enemyPlayer.value.stop();
+
+emit('gameOver');
 
 
 
@@ -37,10 +42,14 @@ if (props.result === 'checkmate') {
     <transition :duration="1000" appear name="game">
         <div class="wrapper">
             <div class="info">
-                    <span>{{ text }}</span>
+                <span v-if="result === 'checkmate'">{{ textStrings[`${winner}Win`] }}</span>
+                <span v-else>{{ textStrings[`draw`] }}</span>
+
+                <span v-if="reason">{{ reason }}</span>
             </div>
             <div class="buttons">
-                <button class="classic-button" @click="useMultiplayerStore().resetInfo()">{{ languageText.returnButton }}</button>
+                <button class="classic-button" @click="multiplayerStore.resetInfo()">{{ textStrings.returnButton
+                }}</button>
             </div>
         </div>
     </transition>
@@ -62,11 +71,18 @@ if (props.result === 'checkmate') {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    span {
+        display: block;
+    }
 
     .info {
         text-align: center;
         font-size: 3rem;
-    }   
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
     .buttons {
         display: flex;
     }

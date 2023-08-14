@@ -10,10 +10,33 @@ import { useAudioPaths } from '@/stores/paths';
 import { Player } from '@/class/player';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
 import GameEndComponent from '@/components/gameEndComponent.vue';
-import { useLanguageStrings } from '@/stores/language';
-import { useAppInfo } from '@/stores/appInfo';
+import { useAppSettings } from '@/stores/appSettings';
 
-const settingsStore = useAppInfo();
+const appStore = useAppSettings();
+
+const textStrings = computed(() => appStore.getStrings);
+
+const multiplayerStore = useMultiplayerStore();
+
+let soundVolume = computed(() => appStore.getVolume);
+const audioHrefs = useAudioPaths().paths;
+
+
+const genRandomSound = (hrefs: Array<string>): () => void => {
+    const random = (min: number, max: number): number => {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1) + min);
+    }
+    const audio = new Audio();
+    return function (): void {
+        audio.src = hrefs[random(0, hrefs.length - 1)];
+        audio.volume = soundVolume.value;
+        audio.play();
+        audio.currentTime = 0;
+    }
+}
+const playChessSound = genRandomSound(audioHrefs);
 
 const props = defineProps({
     soloPlay: {
@@ -30,96 +53,19 @@ const props = defineProps({
     }
 })
 
-const multiplayerStore = useMultiplayerStore();
+const player = computed<Player>(() => multiplayerStore.getPlayer);
+const enemyPlayer = computed<Player>(() => multiplayerStore.getEnemyPlayer);
+
+let playerColor = computed<ChessColor>(() => player.value.getColor());
+let enemyColor = computed<ChessColor>(() => playerColor.value === 'white' ? 'black' : 'white');
+
+//INIT CLASS OBJECT
+const field = reactive(new ChessField(props.soloPlay, playerColor.value));
 
 
-const player = computed<Player>(() => props.player);
-const enemyPlayer = computed<Player>(() => props.enemyPlayer);
 let result = ref<GameState>('default');
-
-let soundVolume = computed(() => settingsStore.getVolume);
-const audioHrefs = useAudioPaths().paths;
-
-
-
-
-
-const genRandomSound = (hrefs: Array<string>): () => void => {
-    const random = (min: number, max: number): number => {
-        min = Math.ceil(min);
-        max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min + 1) + min);
-    }
-
-    return function (): void {
-        const audio = new Audio(hrefs[random(0, hrefs.length)]);
-        audio.volume = soundVolume.value;
-
-        audio.play();
-        setTimeout(() => audio.currentTime = 0, 100);
-    }
-}
-const playChessSound = genRandomSound(audioHrefs);
-
-let color = computed<ChessColor>(() => player.value.getColor());
-
-
-const field = reactive(new ChessField(props.soloPlay, color.value));
-
-let turn = computed<ChessColor>(() => field.getTurn()),
-    colorDown = computed<ChessColor>(() => field.getColorDown()),
-    soloPlay = computed<boolean>(() => field.getSoloplay()),
-    lastTurn = computed<Turn | null>(() => field.getLastTurn());
-
-
-let cellCoords = ref<[Number, Number] | []>([]);
-
-
-//checking game results (draw | default | checkmate)
-const checkGameResult = (): GameState => {
-    if (field.checkKingMenaces(turn.value) && field.isCheckMate(turn.value) === 'checkmate') {
-        return 'checkmate';
-    }
-
-    //default || draw
-    else return field.isDraw(turn.value)
-}
-
-const switchGameStates = (): GameState => {
-    field.switchTurn();
-    field.calcKingSecure(turn.value)
-
-    //timers
-    if (turn.value === player.value.getColor()) {
-        player.value.start();
-        enemyPlayer.value.stop();
-    } else {
-        enemyPlayer.value.start();
-        player.value.stop()
-    };
-
-    return checkGameResult();
-}
-
-
-
-watch((multiplayerStore.turn), (turnInfo) => {
-    console.log('turnInfo');
-    console.log(turnInfo);
-    playChessSound();
-    field.moveFigure(turnInfo.fromRow, turnInfo.fromColumn, turnInfo.toRow, turnInfo.toColumn);
-
-
-    if (turnInfo.figureType) {
-        field.getCell(turnInfo.toRow, turnInfo.toColumn)
-            .setFigure(new Figure(turn.value, turnInfo.figureType));
-
-    }
-
-    result.value = switchGameStates();
-
-})
-
+let winner = ref<ChessColor>('white');
+let reason = ref<string>();
 
 let clicked = false;
 let fromRow: number,
@@ -130,17 +76,82 @@ let fromRow: number,
 
 let cellsToHint: Array<Cell> = [];
 
+let rotate = ref<boolean>(false);
+
+let turn = computed<ChessColor>(() => field.getTurn()),
+    soloPlay = computed<boolean>(() => field.getSoloplay()),
+    lastTurn = computed<Turn | null>(() => field.getLastTurn());
+
+//cell coords that filling if the pawn is on the edge of the board
+let cellCoords = ref<[Number, Number] | []>([]);
 
 
 let handleEvents = computed(() => {
     return !(cellCoords.value.length > 0)
 });
 
-console.log(handleEvents.value)
+//checking game results (draw | default | checkmate)
+const checkGameResult = (): GameState => {
+    if (field.checkKingMenaces(turn.value) && field.isCheckMate(turn.value) === 'checkmate') {
+        return 'checkmate';
+    }
 
+    //default || draw
+    return field.isDraw(turn.value)
+}
+
+//function that works after player moved his figure. switches various variables in field obj
+const switchGameStates = (): void => {
+    field.switchTurn();
+    field.calcKingSecure(turn.value)
+
+    //timers
+    if (turn.value === playerColor.value) {
+        player.value.start();
+        enemyPlayer.value.stop();
+    } else {
+        enemyPlayer.value.start();
+        player.value.stop()
+    };
+
+    switch (checkGameResult()) {
+        case 'checkmate': {
+            setWinnerInfo('checkmate', textStrings.value.checkmate, turn.value === 'black' ? 'white' : 'black')
+            break;
+        }
+        case 'draw': {
+            result.value = 'draw';
+            break;
+        }
+    }
+}
+
+//switch rotate field variable
+const switchRotate = () => {
+    rotate.value = !rotate.value;
+}
+
+//set info about winner for the game over
+const setWinnerInfo = (gameResult: GameState, winReason: string, winnerColor: ChessColor) => {
+    winner.value = winnerColor;
+    reason.value = winReason;
+    result.value = gameResult;
+}
+
+//Changing figure type
+const changeFigure = (type: ChessFigure) => {
+    field.transformFigure(toRow.value, toColumn.value, turn.value, type);
+
+    cellCoords.value = [];
+
+    switchGameStates();
+    multiplayerStore.sendTurnInfo({ fromRow, fromColumn, toRow: toRow.value, toColumn: toColumn.value, figureType: type });
+}
+
+//User click handler - delegation
 const userClickHandler = (ev: MouseEvent) => {
-    if (!handleEvents.value || ev.button !== 0) return;
-    if (rotate.value && colorDown.value === 'white' || !rotate.value && colorDown.value === 'black') switchRotateUser();
+    if (!handleEvents.value) return;
+    if (rotate.value && playerColor.value === 'white' || !rotate.value && playerColor.value === 'black') switchRotate();
     let target = ev.target as HTMLElement;
 
 
@@ -159,7 +170,7 @@ const userClickHandler = (ev: MouseEvent) => {
 
     if (!(!cell.isFree() &&
         turn.value === cell.getFigure()?.getColor() &&
-        (soloPlay.value || turn.value === colorDown.value) ||
+        (soloPlay.value || turn.value === playerColor.value) ||
         cell.getHint()))
         return;
 
@@ -204,9 +215,9 @@ const userClickHandler = (ev: MouseEvent) => {
             })
             field.getCell(fromRow, fromColumn).switchSelected()
 
+            playChessSound();
             if (!field.moveFigure(fromRow, fromColumn, toRow.value, toColumn.value,)) {
-                playChessSound();
-                result.value = switchGameStates();
+                switchGameStates();
 
                 multiplayerStore.sendTurnInfo({ fromRow, fromColumn, toRow: toRow.value, toColumn: toColumn.value, figureType: null });
             }
@@ -229,50 +240,75 @@ const userClickHandler = (ev: MouseEvent) => {
 
 }
 
-//change figure on last move coords
-const changeFigure = (type: ChessFigure) => {
-    console.log('emit')
-    field.transformFigure(toRow.value, toColumn.value, turn.value, type);
-
-    cellCoords.value = [];
-
-    result.value = switchGameStates();
-    multiplayerStore.sendTurnInfo({ fromRow, fromColumn, toRow: toRow.value, toColumn: toColumn.value, figureType: type });
+//emit for the parent component that game is over
+const playerEmitGameOver = (reasonStr: string, color: ChessColor, surrender: boolean = false) => {
+    if (surrender) multiplayerStore.sendSurrender();
+    setWinnerInfo('checkmate', reasonStr, color === 'white' ? 'black' : 'white')
 }
 
+if (playerColor.value === 'black') switchRotate();
 
-const leftEnemy = computed(() => multiplayerStore.leaveLose);
-const enemyLose = () =>
-    result.value = 'checkmate';
 
-watch((leftEnemy), (current) => {
-    if (current) enemyLose();
+
+
+
+let isSurrendered = computed(() => multiplayerStore.surrenderLose),
+    isLeft = computed(() => multiplayerStore.leaveLose)
+
+
+
+//enemy moved figure
+watch((multiplayerStore.turn), (turnInfo) => {
+    console.log('turnInfo');
+    console.log(turnInfo);
+    playChessSound();
+    field.moveFigure(turnInfo.fromRow, turnInfo.fromColumn, turnInfo.toRow, turnInfo.toColumn);
+
+
+    if (turnInfo.figureType) {
+        field.getCell(turnInfo.toRow, turnInfo.toColumn)
+            .setFigure(new Figure(turn.value, turnInfo.figureType));
+
+    }
+
+    switchGameStates();
+
 })
 
-const switchRotateUser = () => {
-    rotate.value = !rotate.value;
-}
+//enemy surrendered
+watch((isSurrendered), (current) => {
+    if (current)
+        setWinnerInfo('checkmate', textStrings.value[`${enemyColor.value}Surrendered`], playerColor.value)
 
-let rotate = ref<boolean>(false);
-if (colorDown.value === 'black') switchRotateUser();
+})
 
+//enemy left
+watch((isLeft), (current) => {
+    if (current)
+        setWinnerInfo('checkmate', textStrings.value.enemyLeft, playerColor.value);
+
+})
 </script>
 
 <template>
     <div class="chess-container" @dragstart.prevent>
-        <GameEndComponent @game-over="multiplayerStore.disconnectServer" v-if="result !== 'default'" :player="player"
-            :color="multiplayerStore.leaveLose ? enemyPlayer.getColor() : turn" :result="result" />
-        <PlayerComponent @rotate="switchRotateUser" @timeend="result = 'checkmate'" v-if="enemyPlayer"
-            :player-obj="(enemyPlayer as Player)" />
-        <ul id="chessField" class="chess-outer-list" @click="userClickHandler"
+        <GameEndComponent v-if="result !== 'default'" :winner="winner" :reason="reason"
+            @game-over="multiplayerStore.disconnectServer" :player="player"
+            :color="multiplayerStore.leaveLose ? enemyColor : turn" :result="result" />
+        <div class="player-wrapper-absolute">
+            <PawnTransform v-show="!handleEvents" @change-figure="changeFigure" :color="turn" :row="toRow"
+                :column="toColumn" />
+            <PlayerComponent :user="{'name': '', imgSrc: ''}" :solo="soloPlay" :you="false" @rotate="switchRotate" @game-over="playerEmitGameOver"
+                :player-obj="(enemyPlayer as Player)" />
+        </div>
+        <ul id="chessField" class="chess-outer-list" @click.left="userClickHandler"
             :style="{ transform: rotate ? 'rotate(180deg)' : '' }">
-
             <template v-for="rowArr, rowIndex in field.getCells()" :key="rowArr">
                 <ul class="row">
                     <template v-for="cell, columnIndex in rowArr" :key="cell">
 
-                        <CellComponentVue :rotate="rotate" :last-turn="lastTurn"
-                            :color-down="colorDown" :solo-play="soloPlay" :turn="turn" :cell="cell" :data-row="rowIndex"
+                        <CellComponentVue :rotate="rotate" :last-turn="lastTurn" :color-down="playerColor"
+                            :solo-play="soloPlay" :turn="turn" :cell="cell" :data-row="rowIndex"
                             :data-column="columnIndex" />
 
                     </template>
@@ -280,19 +316,56 @@ if (colorDown.value === 'black') switchRotateUser();
 
             </template>
         </ul>
-        <PlayerComponent @timeend="result = 'checkmate'" v-if="player" :you="true" :player-obj="(player as Player)" />
+        <PlayerComponent @game-over="playerEmitGameOver" :solo="soloPlay" :you="true" :user="appStore.getUser" :player-obj="(player as Player)" />
 
 
-        <div class="turn-view">
-            <PawnTransform v-show="!handleEvents" @change-figure="changeFigure" :color="turn" :row="toRow"
-                :column="toColumn" />
-            <div class="text">{{ useLanguageStrings().getStrings[`${color}Turn`] }}</div>
-            <div class="color-show" :style="{ backgroundColor: turn }"></div>
-        </div>
+
     </div>
 </template>
 
 <style lang="scss">
+.player-wrapper-absolute {
+    position: relative;
+}
+
+.chess-container {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    width: fit-content;
+    margin: 0 auto;
+    gap: 1rem;
+
+
+
+    .chess-outer-list {
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: column;
+        width: fit-content;
+        margin: 0 auto;
+        user-select: none;
+        box-shadow: 0 0 10px 2px;
+        transition: all 300ms cubic-bezier(.89, .01, .12, 1.04);
+
+
+        .row {
+            display: flex;
+
+            $size: calc(35px + (80 - 30) * ((100vw - 320px) / (1024 - 320)));
+            // $size: 60px;
+            height: $size;
+            width: calc($size * 8);
+
+            max-width: calc(80px * 8);
+            max-height: 80px;
+            min-width: calc(35px * 8);
+            min-height: 35px;
+        }
+
+    }
+}
+
 .turn-view {
     display: flex;
     border: 5px solid rgb(138, 115, 115);
@@ -317,38 +390,4 @@ if (colorDown.value === 'black') switchRotateUser();
     }
 
 }
-
-.rotate-first {
-    transform: rotate(180deg);
-}
-
-.chess-container {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    width: fit-content;
-}
-
-.chess-outer-list {
-    display: flex;
-    flex-wrap: wrap;
-    flex-direction: column;
-    user-select: none;
-    box-shadow: 0 0 10px 2px;
-    transition: all 300ms cubic-bezier(.89, .01, .12, 1.04);
-
-
-    .row {
-        display: flex;
-
-        $size: calc(40px + (80 - 40) * ((100vw - 320px) / (1024 - 320)));
-        // $size: 60px;
-        height: $size;
-        width: calc($size * 8);
-
-        max-width: calc(80px * 8);
-        max-height: 80px;
-    }
-
-}
-</style>@/stores/appInfo
+</style>

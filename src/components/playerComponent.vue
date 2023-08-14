@@ -1,7 +1,10 @@
 <script lang="ts" setup>
 import { Player } from '@/class/player';
-import { useLanguageStrings } from '@/stores/language';
+import { useAppSettings } from '@/stores/appSettings';
+import { useImagePaths } from '@/stores/paths';
 import { computed, type PropType } from 'vue';
+const textStrings = computed(() => useAppSettings().getStrings);
+
 
 const props = defineProps({
     playerObj: {
@@ -10,52 +13,69 @@ const props = defineProps({
     },
     you: {
         type: Boolean,
-        required: false
+        required: true
+    },
+    solo: {
+        type: Boolean,
+        required: true
     }
 })
-const emit = defineEmits(['timeend', 'rotate']);
+const emit = defineEmits(['gameOver', 'rotate']);
 //Поражение игрока данного цвета
 
-const textStrings = useLanguageStrings().getStrings;
+let playerImgHref = computed<string>(() => {
+    return props.playerObj.getImgSrc() || useImagePaths().guestImgHref
+})
 
-console.log(props.playerObj)
+let playerName = computed<string>(() => {
+    return props.playerObj.getName() || textStrings.value.guest;
+})
+
+
+
 
 let time = computed<number>(() => {
     const propTime = props.playerObj.getTime();
     if (propTime <= 0) {
         props.playerObj.stop();
-        emit('timeend')
+        emit('gameOver', textStrings.value.timeLose, playerColor)
         return 0;
     }
-    else return propTime;
+
+    return Math.ceil(propTime);
 
 
 });
 
-let name = computed<string>(() => props.playerObj.getName());
+let playerColor = props.playerObj.getColor()
+const soloPlay = computed(() => props.solo)
 
-
-if (time.value <= 1) {
-    console.log(123);
-};
-
+console.log('playing solo = ', soloPlay.value);
 
 </script>
 
 <template>
     <div class="player-wrapper">
         <div class="avatar">
-            <img src="../assets/guest.png" alt="">
+            <img :src="playerImgHref" alt="" :style="`border-color: ${playerObj.getImgBorder()}`">
+            {{ playerName }} <span v-if="you">{{ `(${textStrings.you})` }}</span>
+        </div>
+
+        <div class="player-buttons">
             <template v-if="you">
-                <span>{{ name }} (You)</span>
-                <button class="classic-button classic-button-small" @click="emit('timeend')">{{
-                    textStrings.surrender }}</button>
+                <button class="classic-button classic-button-small"
+                    @click="emit('gameOver', textStrings[`${playerObj.getColor()}Surrendered`], playerColor, true)">{{
+                        textStrings.surrender }}</button>
             </template>
             <template v-else>
-                <span>{{ name }}</span>
-                <button class="classic-button classic-button-small rotate-button" @click="emit('rotate')"><div><img src="../assets/rotate.png" alt=""></div></button>
+                <button class="classic-button classic-button-small" @click="emit('rotate')">
+                    <span>{{ textStrings.rotate }}</span>
+                </button>
+                <button v-if="!soloPlay" class="classic-button classic-button-small chat-button">
+                    {{ textStrings.chat }}
+                    <img src="@/assets/chat.png" alt="">
+                </button>
             </template>
-
         </div>
         <div class="timer">
             <span> {{ time < 600 ? `0${Math.floor(time / 60)}` : Math.floor(time / 60) }}: {{ (time % 60 < 10) ? `0${time %
@@ -67,50 +87,65 @@ if (time.value <= 1) {
 <style lang="scss" scoped>
 .player-wrapper {
     width: 100%;
-    height: fit-content;
     position: relative;
-    border: 5px solid #123;
-    box-sizing: border-box;
-    padding: 5px;
+    // border: 5px solid #123;
+    padding: 0.25rem;
     display: flex;
     justify-content: space-between;
+    box-sizing: border-box;
     align-items: center;
+    font-size: 2rem;
+    height: 5rem;
+    gap: 0.5rem;
+    padding: 0 1rem 0 0;
+
 
     span {
         display: block;
-        font-size: 2rem;
     }
 
     .avatar {
+        height: 100%;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 5px;
+        gap: 0.25rem;
+        box-sizing: border-box;
         
+        
+        img {
+            height: 95%;
+            border: 3px solid black;
+            aspect-ratio: 1 / 1;
+            border: 0.2rem solid transparent;
+        }
 
-        > img {
-            $size: calc(35px + (50 - 35) * ((100vw - 320px) / (1024 - 320)));
-            width: $size;
-            height: $size;
-            max-width: 50px;
-            min-height: 35px;
-            max-height: 50px;
-            min-width: 35px;
-            margin-right: 10px;
-        }
-        .rotate-button {
-            width: 65px;
-            height: 50px;
-            display: flex;
-            img {
-                width: 100%;
-                height: 100%;
-            }
-        }
 
 
     }
 
-    .timer {}
+    .player-buttons {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 1rem;
+        height: 100%;
+
+        .chat-button {
+            height: 100%;
+            display: flex;
+            width: fit-content;
+
+            img {
+                width: 3rem;
+                aspect-ratio: 1 / 1;
+            }
+        }
+    }
+
+}
+
+.chat-button img {
+    aspect-ratio: 1 / 1;
 }
 </style>

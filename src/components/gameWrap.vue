@@ -2,43 +2,45 @@
 import { Player } from '@/class/player';
 import ChessPlayComponent from '@/components/chessPlayComponent.vue';
 import GameOptionsVue from '@/components/gameOptions.vue'
+import { useAppSettings } from '@/stores/appSettings';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
+const multiplayerStore = useMultiplayerStore();
 
-
-const store = useMultiplayerStore();
 let initSoloPlay = ref<boolean>(false)
 
-let player = store.getPlayer,
-    enemyPlayer = store.getEnemyPlayer;
+let player = computed(() => multiplayerStore.getPlayer),
+    enemyPlayer = computed(() => multiplayerStore.getEnemyPlayer);
 
+let drawComponent = computed<boolean>(() => {
+    return player.value && enemyPlayer.value && player.value.getTime() !== -1 && enemyPlayer.value.getTime() !== -1;
+})
 
-const initGame = (solo: boolean, timeValue: number) => {
-    console.log(solo, timeValue);
-    initSoloPlay.value = solo;
-
-    if (!initSoloPlay.value) store.initServer(timeValue);
-
-    else store.setSoloPlayers();
-
-    
-    return;
+const initGame = (solo: boolean, time: number) => {
+    if (solo) {
+        initSoloPlay.value = true;
+        multiplayerStore.initSinglePlayer();
+    }
+    else {
+        initSoloPlay.value = false;
+        multiplayerStore.initMultiplayerGame(time, useAppSettings().getUser);
+    }
 }
-
 
 </script>
 
 <template>
     <div class="game-wrapper">
-        <template v-if="player && enemyPlayer && player.getTime() !== -1 && enemyPlayer.getTime() !== -1">
-            <ChessPlayComponent :solo-play="initSoloPlay" :player="(player as Player)"
-                :enemy-player="(enemyPlayer as Player)" />
-        </template>
-        <template v-else>
-            <GameOptionsVue @send="initGame" />
-        </template>
+        <ChessPlayComponent v-if="drawComponent"
+            :solo-play="initSoloPlay" :player="(player as Player)" :enemy-player="(enemyPlayer as Player)" />
+
+        <GameOptionsVue @init-game="initGame" v-else />
     </div>
 </template>
 
-<style lang="scss"></style>
+<style lang="scss">
+    .game-wrapper {
+        width: 100%;
+    }
+</style>

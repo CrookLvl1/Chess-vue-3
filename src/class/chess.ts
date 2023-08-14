@@ -68,13 +68,16 @@ export class Cell {
 }
 
 export class Figure {
-    constructor(color: ChessColor, type: ChessFigure) {
+    constructor(color: ChessColor, type: ChessFigure, stolenType: ChessFigure | null = null) {
         this.color = color;
         this.type = type;
+
+        this.stolenType = stolenType;
     }
 
     private color: ChessColor;
     private type: ChessFigure;
+    private stolenType: ChessFigure | null;
 
     getSrc(): string {
         return `${this.type}${this.color}.png`;
@@ -84,6 +87,12 @@ export class Figure {
     }
     getType(): ChessFigure {
         return this.type;
+    }
+    getStolenType(): ChessFigure | null {
+        return this.stolenType;
+    }
+    setStolenType(value: ChessFigure): void {
+        this.stolenType = value;
     }
 }
 
@@ -417,6 +426,18 @@ export class ChessField {
         const kingMenaceCellsLine: Array<Cell> = this.getMenaceCells(row, column, color, 'line');
         const kingMenaceCellsKnight: Array<Cell> = this.getMenaceCells(row, column, color, 'knight')
         const enemyColor: ChessColor = color === 'white' ? 'black' : 'white';
+        
+        this[`${enemyColor}Check`] = false;
+        this[`${enemyColor}KingCell`]?.setChecked(false);
+
+        if (kingMenaceCellsKnight.length + kingMenaceCellsLine.length > 1) {
+            result = true;
+            this.kingSecureCells = [];
+
+            this[`${color}Check`] = true;
+            this[`${color}KingCell`]?.setChecked(true);
+            return true;
+        }
 
         if (kingMenaceCellsLine.length > 0 || kingMenaceCellsKnight.length > 0) {
             result = true;
@@ -470,17 +491,11 @@ export class ChessField {
         else {
             this.kingSecureCells = null;
 
-
-            if (this.lastTurn?.figure.getType() === 'king') {
-                this.cellsArr[(this.lastTurn?.fromRow as number)][(this.lastTurn?.fromColumn as number)].setChecked(false);
-            }
-
             this[`${color}Check`] = false;
             this[`${color}KingCell`]?.setChecked(false);
         }
 
-        this[`${enemyColor}Check`] = false;
-        this[`${enemyColor}KingCell`]?.setChecked(false);
+
 
 
         return result;
@@ -559,7 +574,7 @@ export class ChessField {
         return 'default';
     }
 
-    private replaceCell(fromRow: number, fromColumn: number, color: ChessColor, newCell?: Cell) {
+    private updateCell(fromRow: number, fromColumn: number, color: ChessColor, newCell?: Cell) {
         const arr: Array<Cell> = this[`${color}FiguresCells`];
         arr.splice(
             arr.findIndex((cell: Cell) => {
@@ -613,26 +628,29 @@ export class ChessField {
 
             case 'en passant': {
                 this.cellsArr[fromRow][toColumn].setFigure(null);
-                this.replaceCell(fromRow, toColumn, enemyColor);
+                this.updateCell(fromRow, toColumn, enemyColor);
                 break;
             }
         }
 
 
         if (figure.getType() === 'king') {
+            this.cellsArr[fromRow][fromColumn].setChecked(false);
+            this[`${color}Check`] = false;
+
             this[`${color}KingCell`] = this.cellsArr[toRow][toColumn];
             (this[`${color}KingCell`]?.getFigure() as King).switchMoved();
 
         }
         else
-            this.replaceCell(fromRow, fromColumn, color, this.cellsArr[toRow][toColumn]);
+            this.updateCell(fromRow, fromColumn, color, this.cellsArr[toRow][toColumn]);
 
 
         if (figure.getType() === 'rook')
             (figure as Rook).switchMove();
 
         if (toCellCoords)
-            this.replaceCell(toCellCoords[0], toCellCoords[1], enemyColor)
+            this.updateCell(toCellCoords[0], toCellCoords[1], enemyColor)
 
 
         if (updateLastTurn) {
@@ -778,7 +796,7 @@ export class ChessField {
             ...this.checkDirections({ row, column, allyColor, mainDirection: 'lineal', checkDirections: undefined, range: 1 })
         )
 
-        if (!(kingCell.getFigure() as King).isMoved()) {
+        if (!kingCell.getChecked() && !(kingCell.getFigure() as King).isMoved()) {
             const rooksCells: Array<Cell> = this.filterBy(
                 this.checkDirections({
                     row,
@@ -788,6 +806,7 @@ export class ChessField {
                     checkDirections: ['left', 'right']
                 }), ['rook']
             );
+
 
             if (rooksCells.length > 0) {
                 rooksCells.forEach((rookCell: Cell) => {
@@ -914,7 +933,7 @@ export class ChessField {
 
         //if current figure is not a king && current player got checked 
         if (figureType !== 'king' && this[`${figureColor}Check`]) {
-            return returnArray.filter((cell: Cell) =>
+            returnArray = returnArray.filter((cell: Cell) =>
                 this.kingSecureCells?.includes(cell))
         }
 

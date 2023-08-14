@@ -26,14 +26,12 @@ const newGame = () => {
 
 const getPropFromUrl = (url, property) => {
     const startIndex = url.indexOf(property) + property.length;
-    const endIndex = url.indexOf('&', startIndex);
+    const endIndex = url.indexOf('?&', startIndex);
     if (endIndex === -1) return url.slice(startIndex);
     else return url.slice(startIndex, endIndex);
 }
 
-const sendTurn = (client, data) => {
-    console.log(data);
-    const parsedData = JSON.parse(data);
+const sendInfo = (client, data) => {
     client.send(data);
 }
 
@@ -67,12 +65,12 @@ const createRoom = (time) => {
 
     whiteWs.on('message', (data, isBinary) => {
         data = isBinary ? data : data.toString();
-        sendTurn(blackWs, data);
+        sendInfo(blackWs, data);
 
     })
     blackWs.on('message', (data, isBinary) => {
         data = isBinary ? data : data.toString();
-        sendTurn(whiteWs, data);
+        sendInfo(whiteWs, data);
     })
 
 
@@ -102,7 +100,7 @@ const players = {
 };
 
 
-
+//Server
 wss.on("connection", (ws, req) => {
     if (getPropFromUrl(req.url, 'authKey=') !== securityCode) {
         console.log('auth problem');
@@ -111,11 +109,11 @@ wss.on("connection", (ws, req) => {
     }
     const id = nextId++;
     ws.id = id;
+    console.log(`${id} connected!`);
 
-    console.log('connected', id);
+
 
     const time = getPropFromUrl(req.url, 'time=');
-    
     players[time].push(ws);
 
     if (players[time].length > 1) {
@@ -123,7 +121,8 @@ wss.on("connection", (ws, req) => {
     }
 
     ws.on('close', () => {
-        players[time].splice(players[time].findIndex(playerWs => playerWs === ws), 1);
-        console.log(id, 'disconnected');
+        const userIndex = players[time].findIndex(playerWs => playerWs === ws);
+        if (userIndex !== -1) players[time].splice(userIndex, 1);
+        console.log(`${id} disconnected!`);
     })
 })

@@ -18,29 +18,45 @@ export type GameState = 'default' | 'checkmate' | 'draw';
 export type GameEndState = 'lose' | 'win';
 export type MainDirection = 'lineal' | 'diagonal';
 export type CellsArrays = Record<ChessColor, Array<Cell>>;
+export type CurrentComponent = 'initMultiplayerComponent' | 'chessGame';
 
-export type InfoType = 'turn' | 'playersInfo' | 'leave';
+export type InfoType = 'turn' | 'playersInfo' | 'leave' | 'surrender' | 'message' | 'userprofileinfo';
+
+export interface User {
+    name: string,
+    imgSrc: string,
+    borderColor: string
+}
+
 export interface TurnInfo {
     fromRow: number,
     fromColumn: number,
     toRow: number,
     toColumn: number,
-    figureType: ChessFigure | null
+    figureType: ChessFigure | null,
 };
 
+export interface Message {
+    text: string,
+    read: boolean
+}
+
+export interface Settings {
+    volume: number,
+    langId: LanguageId,
+    user: User,
+    
+}
+
 export interface Info {
-    info: TurnInfo | number | PlayersInfo,
+    info: TurnInfo | PlayersInfo | Message | User,
     type: InfoType
 }
 export interface PlayersInfo {
     whiteId: number,
     blackId: number,
     yourColor: ChessColor,
-    startTime: number
 }
-
-
-
 
 export enum lineDirections {
     '-1 0' = 'top',
