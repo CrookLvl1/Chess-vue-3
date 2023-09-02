@@ -1,16 +1,23 @@
 <script lang="ts" setup>
 import GameWrap from '@/components/gameWrap.vue';
+import HeaderComponentVue from '@/components/headerComponent.vue';
+import FooterComponent from '@/components/footerComponent.vue';
 
-import { reactive, ref, computed } from 'vue';
-
-let component = ref('game');
-
-const currentComp = computed(() => GameWrap)
 
 </script>
 <template>
   <div>
-    <component :is="currentComp"></component>
+    <main class="main-screen-wrapper">
+      <header>
+        <HeaderComponentVue />
+      </header>
+
+      <GameWrap class="main-wrapper"  />
+
+      <footer>
+        <FooterComponent />
+      </footer>
+    </main>
   </div>
 </template>
-<style lang="scss"></style>
+<style lang="scss"></style> 

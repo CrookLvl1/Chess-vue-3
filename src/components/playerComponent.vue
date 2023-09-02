@@ -2,9 +2,14 @@
 import { Player } from '@/class/player';
 import { useAppSettings } from '@/stores/appSettings';
 import { useImagePaths } from '@/stores/paths';
-import { computed, type PropType } from 'vue';
+import { computed, type PropType, ref } from 'vue';
+import MessengerWindowComponentVue from './messengerWindowComponent.vue';
+import { useMultiplayerStore } from '@/stores/multiplayerStore';
+import type { Message } from '@/class/chessTypes&Interfaces';
 const textStrings = computed(() => useAppSettings().getStrings);
+const multiplayerStore = useMultiplayerStore();
 
+const unreadMessages = computed(() => multiplayerStore.getMessages.filter((msg: Message) => !msg.currentUserSender && !msg.read));
 
 const props = defineProps({
     playerObj: {
@@ -24,11 +29,22 @@ const emit = defineEmits(['gameOver', 'rotate']);
 //Поражение игрока данного цвета
 
 let playerImgHref = computed<string>(() => {
-    return props.playerObj.getImgSrc() || useImagePaths().guestImgHref
+    return props.playerObj.getImgSrc() || useImagePaths().guestImgHref;
 })
 
-let playerName = computed<string>(() => {
+let nameHint = ref<boolean>(false);
+
+let fullPlayerName = computed<string>(() => {
     return props.playerObj.getName() || textStrings.value.guest;
+})
+
+let visiblePlayerName = computed<string>(() => {
+    if (fullPlayerName.value.length > 8) {
+        nameHint.value = true;
+        return fullPlayerName.value.slice(0, 6) + '...';
+    }
+
+    return fullPlayerName.value;
 })
 
 
@@ -42,15 +58,18 @@ let time = computed<number>(() => {
         return 0;
     }
 
-    return Math.ceil(propTime);
+    return Math.round(propTime);
 
 
 });
 
 let playerColor = props.playerObj.getColor()
-const soloPlay = computed(() => props.solo)
 
-console.log('playing solo = ', soloPlay.value);
+let showChat = ref<boolean>(false);
+
+const switchShowChat = () => showChat.value = !showChat.value;
+
+const soloPlay = computed(() => props.solo)
 
 </script>
 
@@ -58,22 +77,28 @@ console.log('playing solo = ', soloPlay.value);
     <div class="player-wrapper">
         <div class="avatar">
             <img :src="playerImgHref" alt="" :style="`border-color: ${playerObj.getImgBorder()}`">
-            {{ playerName }} <span v-if="you">{{ `(${textStrings.you})` }}</span>
+            <span :data-hint-msg="nameHint ? fullPlayerName : null" class="player-name">{{ visiblePlayerName }}</span> <span
+                v-if="you">{{ `(${textStrings.you})` }}</span>
         </div>
 
         <div class="player-buttons">
             <template v-if="you">
                 <button class="classic-button classic-button-small"
-                    @click="emit('gameOver', textStrings[`${playerObj.getColor()}Surrendered`], playerColor, true)">{{
-                        textStrings.surrender }}</button>
+                    @click="emit('gameOver', textStrings[`${playerObj.getColor()}Surrendered`], playerColor, true)">
+                    <span>{{ textStrings.surrender }}</span>
+                    <img class="surrender" src="@/assets/surrender.png" alt="">
+                </button>
             </template>
             <template v-else>
+                <MessengerWindowComponentVue @close="switchShowChat" v-show="showChat" />
                 <button class="classic-button classic-button-small" @click="emit('rotate')">
                     <span>{{ textStrings.rotate }}</span>
+                    <img class="rotate" src="@/assets/rotate.png" alt="">
                 </button>
-                <button v-if="!soloPlay" class="classic-button classic-button-small chat-button">
-                    {{ textStrings.chat }}
-                    <img src="@/assets/chat.png" alt="">
+                <button @click="switchShowChat" v-if="!soloPlay" class="classic-button classic-button-small chat-button">
+                    <span>{{ showChat ? textStrings.closeChat : textStrings.openChat }}</span>
+                    <div class="unread-messages">{{ unreadMessages.length > 0 ? unreadMessages.length : '' }}</div>
+                    <img class="chat" src="@/assets/chat.png" alt="">
                 </button>
             </template>
         </div>
@@ -85,19 +110,79 @@ console.log('playing solo = ', soloPlay.value);
 </template>
 
 <style lang="scss" scoped>
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(-360deg);
+    }
+}
+
+@keyframes surrender {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    40% {
+        transform: rotate(25deg);
+    }
+
+    80% {
+        transform: rotate(-25deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }
+}
+
+@keyframes chat {
+    0% {
+        transform: scale(1);
+    }
+
+    25% {
+        transform: scale(1.25);
+    }
+
+    50% {
+        transform: scale(1.3)
+    }
+
+    75% {
+        transform: scale(1.25);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+}
+
+.unread-messages {
+    display: block;
+    position: absolute;
+    color: red;
+    right: 0;
+    top: 0;
+    font-weight: 700;
+    font-size: 2rem;
+}
+
 .player-wrapper {
     width: 100%;
     position: relative;
-    // border: 5px solid #123;
-    padding: 0.25rem;
     display: flex;
     justify-content: space-between;
     box-sizing: border-box;
     align-items: center;
-    font-size: 2rem;
-    height: 5rem;
-    gap: 0.5rem;
-    padding: 0 1rem 0 0;
+    font-size: 2.5rem;
+    gap: 0.75rem;
+    padding-right: 1rem;
+    width: 100%;
+    margin: 0 auto;
 
 
     span {
@@ -111,12 +196,12 @@ console.log('playing solo = ', soloPlay.value);
         align-items: center;
         gap: 0.25rem;
         box-sizing: border-box;
-        
-        
+
         img {
-            height: 95%;
+            border-radius: 6px;
+            width: 5rem;
+            height: 5rem;
             border: 3px solid black;
-            aspect-ratio: 1 / 1;
             border: 0.2rem solid transparent;
         }
 
@@ -124,28 +209,89 @@ console.log('playing solo = ', soloPlay.value);
 
     }
 
+    .player-name {
+        display: block;
+        position: relative;
+    }
+
     .player-buttons {
         display: flex;
-        justify-content: flex-start;
         align-items: center;
         gap: 1rem;
         height: 100%;
+        flex: 1 1;
 
-        .chat-button {
-            height: 100%;
+        button {
+            height: 4rem;
             display: flex;
-            width: fit-content;
+            gap: 0.5rem;
+            transition: all 250ms linear;
+
+            &:hover,
+            &:active {
+                box-shadow:
+                    inset 0 4rem 0 0 rgb(102, 108, 182),
+                ;
+
+                img {
+                    animation-duration: 700ms;
+                    animation-delay: 250ms;
+                    &.rotate {
+                        animation-name: rotate;
+                        animation-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    }
+
+                    &.surrender {
+                        animation-name: surrender;
+                        animation-timing-function: ease-in-out;
+                    }
+
+                    &.chat {
+                        animation-name: chat;
+                        animation-duration: 350ms;
+                        animation-timing-function: ease-in-out;
+                        animation-iteration-count: 2;
+                    }
+                }
+
+            }
 
             img {
-                width: 3rem;
-                aspect-ratio: 1 / 1;
+                height: 100%;
+                width: 2rem;
+                height: 2rem;
             }
         }
     }
 
 }
 
-.chat-button img {
-    aspect-ratio: 1 / 1;
+@media (max-width: 700px) {
+    .player-wrapper .player-buttons button {
+        span {
+            display: none;
+        }
+
+        // padding: 0 2rem;
+        // box-sizing: border-box;
+        // height: 100%;
+        justify-content: center;
+        align-items: center;
+        min-width: 8rem;
+        height: 4rem;
+
+        img {
+            width: 3.5rem;
+            height: 3.5rem;
+        }
+    }
+}
+@media (max-width: 600px) {
+    .player-wrapper .avatar {
+        img {
+            width: 6rem;
+            height: 6rem;
+        }
+    }
 }
 </style>

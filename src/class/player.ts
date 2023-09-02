@@ -11,11 +11,11 @@ export class Player {
         this.timerInterval = null;
         this.currentTime = time;
         this.turnStart = new Date().getTime();
-        
-        
+
+
         this.name = '';
         this.imgSrc = '';
-        this.imgBorder = '';
+        this.borderColor = '';
     }
 
     private id: number;
@@ -30,20 +30,26 @@ export class Player {
 
     private name: string;
     private imgSrc: string;
-    private imgBorder: string;
+    private borderColor: string;
+
+    fillUserProfileInfo({ name, imgSrc, borderColor }: { name: string, imgSrc: string, borderColor: string }) {
+        this.name = name;
+        this.imgSrc = imgSrc;
+        this.borderColor = borderColor;
+    }
+
+    fillPlayerInfo({ id, color, time }: { id: number, color: ChessColor, time: number }) {
+        this.id = id;
+        this.color = color;
+        this.currentTime = this.initTime = time;
+    }
 
     getId(): number {
         return this.id;
     }
-    setId(value: number): void {
-        this.id = value;
-    }
 
     getImgBorder(): string {
-        return this.imgBorder;
-    }
-    setImgBorder(value: string) {
-        this.imgBorder = value;
+        return this.borderColor;
     }
 
     getTime(): number {
@@ -57,36 +63,16 @@ export class Player {
     getName(): string {
         return this.name;
     }
-    setName(value: string) {
-        this.name = value;
-    }
 
     getImgSrc(): string {
         return this.imgSrc;
     }
 
-    setImgSrc(value: string) {
-        this.imgSrc = value;
-    }
-
-
-
-    setColor(color: ChessColor): void {
-        this.color = color;
-    }
-
-    setTime(time: number): void {
-        console.log('setTime', time);
-        this.currentTime = time;
-    }
-
     addTime(time: number): void {
         this.currentTime += time;
+        this.initTime += time;
     }
 
-    initTimeSync() {
-        this.initTime = this.currentTime;
-    }
     getStarted(): boolean {
         return this.started;
     }
@@ -97,24 +83,19 @@ export class Player {
         }, 1000);
         this.started = true;
         this.turnStart = new Date().getTime();
-        console.log('started', this.color);
 
-
-
-        const time = this.currentTime;
         this.syncTime = setTimeout(() => {
             this.currentTime = 0;
-            console.log(this.color, 'end with timeout');
-        }, time * 1000);
+        }, this.currentTime * 1000);
     }
     stop(): void {
-        if (this.timerInterval) clearInterval(this.timerInterval as ReturnType<typeof setInterval>);
+        clearInterval(this.timerInterval as ReturnType<typeof setInterval>);
+
         this.started = false;
         this.initTime -= (new Date().getTime() - this.turnStart) / 1000;
         this.currentTime = this.initTime;
 
         clearTimeout(this.syncTime as ReturnType<typeof setTimeout>);
-        console.log('cleared')
     }
 
 }

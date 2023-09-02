@@ -19,8 +19,17 @@ export type GameEndState = 'lose' | 'win';
 export type MainDirection = 'lineal' | 'diagonal';
 export type CellsArrays = Record<ChessColor, Array<Cell>>;
 export type CurrentComponent = 'initMultiplayerComponent' | 'chessGame';
+export type FigureTurnType = 'own' | 'stolen';
+export type DrawReason = 'stalemate' | 'seventyFiveMovesRule' | 'threefoldRepeat';
+export type GameEndReason = DrawReason | 'checkmate';
 
-export type InfoType = 'turn' | 'playersInfo' | 'leave' | 'surrender' | 'message' | 'userprofileinfo';
+export type InfoType = 'turn' | 'playersInfo' | 'leave' | 'surrender' | 'message' | 'userprofileinfo' | 'readMessages' | 'personalroom' | 'roomnotfound';
+
+export interface PossibleTurns {
+    'own': Array<Cell>,
+    'stolen': Array<Cell>
+}
+
 
 export interface User {
     name: string,
@@ -28,34 +37,68 @@ export interface User {
     borderColor: string
 }
 
+
+
+export interface Turn {
+    fromRow: number,
+    fromColumn: number,
+    toRow: number,
+    toColumn: number,
+    fromFigureType: ChessFigure,
+    toFigureType: ChessFigure | null,
+    stolenType: ChessFigure | null,
+    type: TurnType,
+    figureTurnType: FigureTurnType,
+    figure: Figure,
+}
+
 export interface TurnInfo {
     fromRow: number,
     fromColumn: number,
     toRow: number,
     toColumn: number,
+    turnType: TurnType,
+    figureTurnType: FigureTurnType,
     figureType: ChessFigure | null,
+    stolenType: ChessFigure | null,
+
 };
 
-export interface Message {
+export interface MessageInfo {
     text: string,
-    read: boolean
+}
+
+export interface Message extends MessageInfo {
+    read: boolean,
+    currentUserSender: boolean,
+    id: number,
+    date: Date
 }
 
 export interface Settings {
     volume: number,
     langId: LanguageId,
     user: User,
-    
+
 }
 
-export interface Info {
-    info: TurnInfo | PlayersInfo | Message | User,
-    type: InfoType
-}
 export interface PlayersInfo {
     whiteId: number,
     blackId: number,
     yourColor: ChessColor,
+    time: number
+}
+
+export interface Info {
+    info: TurnInfo | PlayersInfo | Message | User | Array<number> | string,
+    type: InfoType,
+    pingTime?: number
+}
+
+
+
+export interface Positions {
+    [key: number]: Map<Cell, number>
 }
 
 export enum lineDirections {
@@ -94,15 +137,7 @@ export interface Timer {
     interval: (ReturnType<typeof setInterval>)
 }
 
-export interface Turn {
-    fromRow: number,
-    fromColumn: number,
-    toRow: number,
-    toColumn: number,
-    type: TurnType,
-    figure: Figure,
 
-}
 
 export interface GameSave {
     downColor: ChessColor,

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { ChessColor, ChessFigure, GameState, Turn, TurnInfo } from '@/class/chessTypes&Interfaces';
+import type { ChessColor, ChessFigure, DrawReason, GameState, PossibleTurns, Turn, TurnInfo, TurnType, GameEndReason, FigureTurnType } from '@/class/chessTypes&Interfaces';
 import { ChessField, Figure } from '@/class/chess';
 import { Cell } from '@/class/chess';
 import CellComponentVue from '@/components/cellComponent.vue';
@@ -11,6 +11,9 @@ import { Player } from '@/class/player';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
 import GameEndComponent from '@/components/gameEndComponent.vue';
 import { useAppSettings } from '@/stores/appSettings';
+import StealTurnsComponent from './stealTurnsComponent.vue';
+import UserTurnClarifyComponent from './userTurnClarifyComponent.vue';
+
 
 const appStore = useAppSettings();
 
@@ -28,9 +31,16 @@ const genRandomSound = (hrefs: Array<string>): () => void => {
         max = Math.floor(max);
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
-    const audio = new Audio();
+    const audioArr:Array<HTMLAudioElement> = [];
+    for (const href of hrefs) {
+        const audio = new Audio();
+        audio.src = href;
+        audioArr.push(audio);
+    }
+
+
     return function (): void {
-        audio.src = hrefs[random(0, hrefs.length - 1)];
+        const audio: HTMLAudioElement = audioArr[random(0, hrefs.length - 1)];
         audio.volume = soundVolume.value;
         audio.play();
         audio.currentTime = 0;
@@ -63,7 +73,7 @@ let enemyColor = computed<ChessColor>(() => playerColor.value === 'white' ? 'bla
 const field = reactive(new ChessField(props.soloPlay, playerColor.value));
 
 
-let result = ref<GameState>('default');
+let gameResult = ref<GameState>('default');
 let winner = ref<ChessColor>('white');
 let reason = ref<string>();
 
@@ -74,7 +84,7 @@ let fromRow: number,
     toColumn = ref<number>(0);
 
 
-let cellsToHint: Array<Cell> = [];
+let cellsToHint: PossibleTurns;
 
 let rotate = ref<boolean>(false);
 
@@ -84,26 +94,35 @@ let turn = computed<ChessColor>(() => field.getTurn()),
 
 //cell coords that filling if the pawn is on the edge of the board
 let cellCoords = ref<[Number, Number] | []>([]);
+let possibleSteal = ref<Array<ChessFigure>>([]);
+
+let userClarifyCell = ref<Cell | null>(null);
+let userClarfiyToCell = ref<Cell | null>(null);
 
 
 let handleEvents = computed(() => {
-    return !(cellCoords.value.length > 0)
+    return (gameResult.value === 'default' && cellCoords.value.length === 0 && !(possibleSteal.value.length > 0) && !userClarifyCell.value);
+
 });
 
 //checking game results (draw | default | checkmate)
-const checkGameResult = (): GameState => {
+const checkGameResult = (): [GameState, GameEndReason] => {
     if (field.checkKingMenaces(turn.value) && field.isCheckMate(turn.value) === 'checkmate') {
-        return 'checkmate';
+        return ['checkmate', 'checkmate'];
     }
 
     //default || draw
-    return field.isDraw(turn.value)
+    return field.isDraw(turn.value) as [GameState, DrawReason]
 }
 
 //function that works after player moved his figure. switches various variables in field obj
 const switchGameStates = (): void => {
+    console.log("SWITCH GAME STATES")
     field.switchTurn();
-    field.calcKingSecure(turn.value)
+    field.calcKingSecure(turn.value);
+    userClarfiyToCell.value = null;
+
+
 
     //timers
     if (turn.value === playerColor.value) {
@@ -114,13 +133,15 @@ const switchGameStates = (): void => {
         player.value.stop()
     };
 
-    switch (checkGameResult()) {
+    const resultTuple: [GameState, GameEndReason] = checkGameResult();
+
+    switch (resultTuple[0]) {
         case 'checkmate': {
-            setWinnerInfo('checkmate', textStrings.value.checkmate, turn.value === 'black' ? 'white' : 'black')
+            setGameEndInfo('checkmate', textStrings.value[resultTuple[1]], turn.value === 'black' ? 'white' : 'black')
             break;
         }
         case 'draw': {
-            result.value = 'draw';
+            setGameEndInfo('draw', textStrings.value[resultTuple[1]],)
             break;
         }
     }
@@ -132,21 +153,122 @@ const switchRotate = () => {
 }
 
 //set info about winner for the game over
-const setWinnerInfo = (gameResult: GameState, winReason: string, winnerColor: ChessColor) => {
-    winner.value = winnerColor;
-    reason.value = winReason;
-    result.value = gameResult;
+const setGameEndInfo = (result: GameState, endReason: string, winnerColor?: ChessColor) => {
+    reason.value = endReason;
+    gameResult.value = result;
+    if (winnerColor) winner.value = winnerColor;
 }
 
 //Changing figure type
+
+
+const stealTurns = (type: ChessFigure | null) => {
+    possibleSteal.value = [];
+
+    if (type) {
+        field.updateStolenType(type);
+        (field.getCell(toRow.value, toColumn.value).getFigure() as Figure).setStolenType(type);
+    }
+
+    if (handleEvents.value) {
+        switchGameStates();
+        multiplayerStore.sendTurnInfo({ fromRow, fromColumn, toRow: toRow.value, toColumn: toColumn.value, figureTurnType: (lastTurn.value as Turn).figureTurnType, stolenType: type, figureType: null, turnType: (lastTurn.value as Turn).type });
+    }
+
+}
+
+const turnEnding = (cellFrom: Cell, cellToFigure: Figure | null, figureTurnType: FigureTurnType) => {
+    const turnType = field.getTurnType(fromRow, fromColumn, toRow.value, toColumn.value, figureTurnType);
+
+    const cellFromFigure = cellFrom.getFigure() as Figure;
+
+    console.log('TURN ENDING', cellFromFigure, cellToFigure, figureTurnType, turnType);
+    possibleSteal.value = checkStealingTypes(turnType, cellToFigure, cellFromFigure, figureTurnType);
+
+    if (field.moveFigure(fromRow, fromColumn, toRow.value, toColumn.value, turnType, figureTurnType)) cellCoords.value = [toRow.value, toColumn.value];
+
+    //DEFAULT MOVE (NO EN PASSANT && NOT PAWN REACHED THE EDGE OF THE FIELD && NOT FIGURE ATE ANOTHER WHICH TURNS COULD STEAL)
+    playChessSound();
+    resetClick(cellFrom)
+    if (handleEvents.value) {
+        console.log('handling event turn ending')
+        switchGameStates()
+        multiplayerStore.sendTurnInfo({ fromRow, fromColumn, toRow: toRow.value, toColumn: toColumn.value, figureType: null, figureTurnType, stolenType: null, turnType })
+    };
+
+
+}
+
+const chooseMoveType = (figureTurnType: FigureTurnType) => {
+    console.log("CHOOSE MOVE TYPE ", figureTurnType, userClarifyCell.value?.getFigure(), userClarfiyToCell.value?.getFigure());
+
+    console.log(userClarifyCell.value);
+
+    console.log(userClarfiyToCell.value)
+
+    turnEnding((userClarifyCell.value as Cell), (userClarfiyToCell.value as Cell).getFigure(), figureTurnType);
+    console.log("END CHOSING")
+}
+
 const changeFigure = (type: ChessFigure) => {
-    field.transformFigure(toRow.value, toColumn.value, turn.value, type);
+    field.transformFigure(toRow.value, toColumn.value, turn.value, type, field.getCell(toRow.value, toColumn.value).getFigure()?.getStolenType());
 
     cellCoords.value = [];
 
     switchGameStates();
-    multiplayerStore.sendTurnInfo({ fromRow, fromColumn, toRow: toRow.value, toColumn: toColumn.value, figureType: type });
+    multiplayerStore.sendTurnInfo({
+        fromRow, fromColumn, toRow: toRow.value, toColumn: toColumn.value,
+        figureType: type, figureTurnType: (lastTurn.value as Turn).figureTurnType,
+        stolenType: (lastTurn.value as Turn).stolenType,
+        turnType: (lastTurn.value as Turn).type
+    });
 }
+
+const switchHints = (cells: PossibleTurns, value: boolean) => {
+    cells.own.forEach((cell: Cell) => cell.setHint(value));
+    cells.stolen.forEach((cell: Cell) => cell.setHint(value));
+}
+
+const getAvailableSteal = (cellFromFigure: Figure, cellToFigure: Figure, figureTurnType: FigureTurnType): Array<ChessFigure> => {
+    const resultArr: Array<ChessFigure> = [];
+    const fromType = cellFromFigure.getType() as ChessFigure,
+        toType = cellToFigure.getType() as ChessFigure,
+        stolenToType: null | ChessFigure = cellToFigure.getStolenType();
+
+    let stolenFromType: null | ChessFigure = cellFromFigure.getStolenType();
+    if (stolenFromType && figureTurnType === 'stolen') stolenFromType = null;
+
+    //Checking if there are stealable figure that we have eaten or stolen type that is have
+    if (stolenFromType !== toType && field.isStealAvailable(fromType, toType))
+        resultArr.push(toType);
+
+    if (stolenToType && stolenToType !== stolenFromType && field.isStealAvailable(fromType, stolenToType))
+        resultArr.push(stolenToType);
+
+
+    return resultArr;
+}
+
+const checkStealingTypes = (turnType: TurnType, cellToFigure: Figure | null, cellFromFigure: Figure, figureTurnType: FigureTurnType): Array<ChessFigure> => {
+    let resultArr: Array<ChessFigure> = [];
+    console.log('Check stealing', turnType, cellToFigure, cellFromFigure, 'cell above = ', field.getCell(fromRow, toColumn.value));
+
+    if (turnType === 'en passant') resultArr = getAvailableSteal(cellFromFigure, field.getCell(fromRow, toColumn.value).getFigure() as Figure, figureTurnType);
+    else if (cellToFigure) resultArr = getAvailableSteal(cellFromFigure, cellToFigure, figureTurnType);
+
+    console.log("POSSIBLE STEALS = ", resultArr);
+    return resultArr;
+}
+
+const resetClick = (activeCell: Cell) => {
+    clicked = false;
+    console.log("ACTIVE CELL = ", activeCell)
+    activeCell.switchSelected();
+    userClarifyCell.value = null;
+    switchHints(cellsToHint, false);
+    cellsToHint = { own: [], stolen: [] };
+}
+
 
 //User click handler - delegation
 const userClickHandler = (ev: MouseEvent) => {
@@ -178,92 +300,98 @@ const userClickHandler = (ev: MouseEvent) => {
     if (!clicked) {
         fromRow = +(target.dataset.row as string);
         fromColumn = +(target.dataset.column as string);
-        const cellFromCheck = field.getCell(fromRow, fromColumn);
+        const cellFromCheck: Cell = field.getCell(fromRow, fromColumn);
+
         if (cellFromCheck.isFree()) return;
 
         // switch hints
         cellsToHint = field.getHints(fromRow, fromColumn);
-        if (cellsToHint.length === 0) return;
+        if (cellsToHint.own.length === 0 && cellsToHint.stolen.length === 0) return;
 
-        cellsToHint.forEach((cell: Cell) => {
-            cell.switchHint();
-        })
-
+        switchHints(cellsToHint, true);
         cellFromCheck.switchSelected();
-
         clicked = true;
-
     }
     else {
         toRow.value = +(target.dataset.row as string);
         toColumn.value = +(target.dataset.column as string);
 
-        //Same color or no hint
-        const cellFromCheck = field.getCell(fromRow, fromColumn),
-            cellToCheck = field.getCell(toRow.value, toColumn.value);
-        if (cellFromCheck.getFigure()?.getColor() === cellToCheck.getFigure()?.getColor() || !cellToCheck.getHint()) {
+        const cellFromCheck: Cell = field.getCell(fromRow, fromColumn);
 
-            cellsToHint.forEach((cell: Cell) => cell.switchHint());
-            clicked = false;
-            cellFromCheck.switchSelected()
+        console.log(cellFromCheck, cellFromCheck.getFigure());
+        //Same color or no hint
+        const cellToCheck: Cell = field.getCell(toRow.value, toColumn.value);
+        if (!cellToCheck.getHint()) {
+            resetClick(cellFromCheck);
             return;
         };
 
-        if (field.getCell(toRow.value, toColumn.value).getHint()) {
-            cellsToHint.forEach((cell: Cell) => {
-                cell.switchHint();
-            })
-            field.getCell(fromRow, fromColumn).switchSelected()
-
-            playChessSound();
-            if (!field.moveFigure(fromRow, fromColumn, toRow.value, toColumn.value,)) {
-                switchGameStates();
-
-                multiplayerStore.sendTurnInfo({ fromRow, fromColumn, toRow: toRow.value, toColumn: toColumn.value, figureType: null });
-            }
 
 
-            else {
-                cellCoords.value = [toRow.value, toColumn.value]
-                //else look in change figure
-            }
 
+        const cellFromFigure: Figure = cellFromCheck.getFigure() as Figure,
+            cellToFigure: Figure | null = cellToCheck.getFigure();
+
+        if (cellFromFigure?.getColor() === cellToFigure?.getColor()) return;
+
+        userClarfiyToCell.value = cellToCheck;
+
+
+
+
+
+        // ITS OWN IF FIGURES HAVE SAME TURNS !!!!!!! NEED TO FIX IT
+        const ownTurn: boolean = cellsToHint.own.includes(cellToCheck);
+
+        const ownTurnType: TurnType = field.getTurnType(fromRow, fromColumn, toRow.value, toColumn.value, 'own'),
+            stolenTurnType: TurnType | null = cellFromFigure.getStolenType() ? field.getTurnType(fromRow, fromColumn, toRow.value, toColumn.value, 'stolen') : null;
+
+        if (ownTurn && cellsToHint.stolen.includes(cellToCheck) && stolenTurnType && ownTurnType !== stolenTurnType) {
+            console.log("DIFFERENT TURN TYPES", ownTurnType, stolenTurnType);
+
+            userClarifyCell.value = cellFromCheck;
 
         }
 
+        else {
 
-        clicked = false;
-        cellsToHint = [];
-        return;
+            turnEnding(cellFromCheck, cellToFigure, ownTurn ? 'own' : 'stolen');
+        }
+
     }
 
 
+
+    return;
 }
+
+
 
 //emit for the parent component that game is over
 const playerEmitGameOver = (reasonStr: string, color: ChessColor, surrender: boolean = false) => {
     if (surrender) multiplayerStore.sendSurrender();
-    setWinnerInfo('checkmate', reasonStr, color === 'white' ? 'black' : 'white')
+    setGameEndInfo('checkmate', reasonStr, color === 'white' ? 'black' : 'white')
 }
+
 
 if (playerColor.value === 'black') switchRotate();
 
 
-
-
-
 let isSurrendered = computed(() => multiplayerStore.surrenderLose),
-    isLeft = computed(() => multiplayerStore.leaveLose)
-
-
+    isLeft = computed(() => multiplayerStore.leaveLose);
 
 //enemy moved figure
-watch((multiplayerStore.turn), (turnInfo) => {
-    console.log('turnInfo');
+watch(multiplayerStore.turn, (turnInfo: TurnInfo) => {
     console.log(turnInfo);
     playChessSound();
-    field.moveFigure(turnInfo.fromRow, turnInfo.fromColumn, turnInfo.toRow, turnInfo.toColumn);
+    // DO STOLEN INFO MESSAGE
+    field.moveFigure(turnInfo.fromRow, turnInfo.fromColumn, turnInfo.toRow, turnInfo.toColumn, turnInfo.turnType, turnInfo.figureTurnType);
 
+    console.log('stolen type = ', turnInfo.stolenType);
+    if (turnInfo.stolenType) {
+        field.updateStolenType(turnInfo.stolenType);
+        (field.getCell(turnInfo.toRow, turnInfo.toColumn).getFigure() as Figure).setStolenType(turnInfo.stolenType);
+    }
 
     if (turnInfo.figureType) {
         field.getCell(turnInfo.toRow, turnInfo.toColumn)
@@ -275,31 +403,40 @@ watch((multiplayerStore.turn), (turnInfo) => {
 
 })
 
+
 //enemy surrendered
 watch((isSurrendered), (current) => {
     if (current)
-        setWinnerInfo('checkmate', textStrings.value[`${enemyColor.value}Surrendered`], playerColor.value)
-
+        setGameEndInfo('checkmate', textStrings.value[`${enemyColor.value}Surrendered`], playerColor.value)
 })
 
 //enemy left
 watch((isLeft), (current) => {
     if (current)
-        setWinnerInfo('checkmate', textStrings.value.enemyLeft, playerColor.value);
-
+        setGameEndInfo('checkmate', textStrings.value.enemyLeft, playerColor.value);
 })
 </script>
 
 <template>
     <div class="chess-container" @dragstart.prevent>
-        <GameEndComponent v-if="result !== 'default'" :winner="winner" :reason="reason"
+        <GameEndComponent v-if="gameResult !== 'default'" :winner="winner" :reason="reason"
             @game-over="multiplayerStore.disconnectServer" :player="player"
-            :color="multiplayerStore.leaveLose ? enemyColor : turn" :result="result" />
-        <div class="player-wrapper-absolute">
-            <PawnTransform v-show="!handleEvents" @change-figure="changeFigure" :color="turn" :row="toRow"
-                :column="toColumn" />
-            <PlayerComponent :user="{'name': '', imgSrc: ''}" :solo="soloPlay" :you="false" @rotate="switchRotate" @game-over="playerEmitGameOver"
-                :player-obj="(enemyPlayer as Player)" />
+            :color="multiplayerStore.leaveLose ? enemyColor : turn" :result="gameResult" />
+        <div class="player-wrapper-relative">
+            <PlayerComponent :key="3" :game-end="gameResult !== 'default'" :solo="soloPlay" :you="false"
+                @rotate="switchRotate" @game-over="playerEmitGameOver" :player-obj="(enemyPlayer as Player)" />
+                
+            <transition-group name="from-above" appear>
+                <PawnTransform :key="1" v-if="(cellCoords.length > 0)" @change-figure="changeFigure" :color="turn"
+                    :row="toRow" :column="toColumn" />
+
+                <StealTurnsComponent :key="2" v-if="(possibleSteal.length > 0)" :color="turn"
+                    :possible-steal="possibleSteal" @steal-turns="stealTurns" />
+
+
+                <UserTurnClarifyComponent :key="4" v-if="userClarifyCell?.getFigure()" @clarify="chooseMoveType"
+                    :figure="(userClarifyCell?.getFigure() as Figure)" />
+            </transition-group>
         </div>
         <ul id="chessField" class="chess-outer-list" @click.left="userClickHandler"
             :style="{ transform: rotate ? 'rotate(180deg)' : '' }">
@@ -316,7 +453,8 @@ watch((isLeft), (current) => {
 
             </template>
         </ul>
-        <PlayerComponent @game-over="playerEmitGameOver" :solo="soloPlay" :you="true" :user="appStore.getUser" :player-obj="(player as Player)" />
+        <PlayerComponent :game-end="gameResult !== 'default'" @game-over="playerEmitGameOver" :solo="soloPlay" :you="true"
+            :user="appStore.getUser" :player-obj="(player as Player)" />
 
 
 
@@ -324,7 +462,8 @@ watch((isLeft), (current) => {
 </template>
 
 <style lang="scss">
-.player-wrapper-absolute {
+.player-wrapper-relative {
+    padding-top: 1rem;
     position: relative;
 }
 
@@ -352,7 +491,7 @@ watch((isLeft), (current) => {
         .row {
             display: flex;
 
-            $size: calc(35px + (80 - 30) * ((100vw - 320px) / (1024 - 320)));
+            $size: calc(40px + (80 - 40) * ((100vw - 320px) / (700 - 320)));
             // $size: 60px;
             height: $size;
             width: calc($size * 8);
@@ -360,7 +499,7 @@ watch((isLeft), (current) => {
             max-width: calc(80px * 8);
             max-height: 80px;
             min-width: calc(35px * 8);
-            min-height: 35px;
+            min-height: 40px;
         }
 
     }

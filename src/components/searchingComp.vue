@@ -1,18 +1,22 @@
 <script lang="ts" setup>
 const props = defineProps({
-    text: {type: String, required: true}
+    text: { type: String, required: true }
 })
 
 </script>
 <template>
-    <div class="searching">
-        <div class="text">{{ text }}...</div>
-        <div class="circle"></div>
-        <div class="circle"></div>
-        <div class="circle"></div>
-        <div class="circle"></div>
-        <div class="circle"></div>
-    </div>
+        <transition name="appear-from-right">
+            <div class="searching-wrapper">
+                <div class="text">{{ text }}</div>
+                <div class="animation">
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                </div>
+            </div>
+        </transition>
 </template>
 <style lang="scss">
 @keyframes fadeAnimation {
@@ -42,13 +46,19 @@ const props = defineProps({
     }
 }
 
-.searching {
+.searching-wrapper {
     display: flex;
-    width: 100%;
+    // width: 100%;
     justify-content: center;
     gap: 1rem;
     padding: 1rem;
     align-items: center;
+    flex-wrap: wrap;
+
+    .animation {
+        display: flex;
+        gap: 1rem;
+    }
 
     .text {
         font-size: 2rem;

@@ -73,7 +73,7 @@ let bg = computed<CellColor>(() => {
 
 .cell-attacked {
     background-color: lightcoral;
-    box-shadow: 0 0 0 7.5px lightcoral;
+    box-shadow: 0 0 0 1rem lightcoral;
 }
 
 
@@ -91,8 +91,8 @@ let bg = computed<CellColor>(() => {
 
     .circle {
         position: absolute;
-        width: min(10%);
-        height: min(10%);
+        width: 1rem;
+        height: 1rem;
         background-color: #414e5b;
         border-radius: 50%;
         opacity: 50%;

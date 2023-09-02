@@ -2,100 +2,98 @@
 import SearchingComp from '@/components/searchingComp.vue'
 import { useAppSettings } from '@/stores/appSettings';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import MultiplayerStartButtons from './multiplayerStartButtons.vue';
+import PrivateGame from './privateGameComponent.vue';
+import menuTransitionComponent from './menuTransitionComponent.vue';
+
+type CurrentScreen = 'start' | 'searching' | 'multiplayer' | 'private' | 'searching';
 
 const multiplayerStore = useMultiplayerStore();
-const textStrings = computed(() => useAppSettings().getStrings);
+const appStore = useAppSettings();
+const textStrings = computed(() => appStore.getStrings);
 
-let startScreen = ref<boolean>(true);
-let searching = ref<boolean>(false);
+let currentScreen = ref<CurrentScreen>('start');
 
 const emit = defineEmits({
-    'initGame': (solo: boolean, time: number) => true
+    'initGame': (solo: boolean, time: number, personalGame: boolean, host?: boolean, roomId?: string) => true
 })
 
-
 const reset = () => {
-    searching.value = false;
-    startScreen.value = true;
+    currentScreen.value = 'start';
     multiplayerStore.disconnectServer();
 }
 
-const initMultiplayerGame = (time: number) => {
-    searching.value = true;
-    emit('initGame', false, time);
+const initMultiplayerGame = (time: number, personalGame: boolean = false, host?: boolean, roomId?: string) => {
+    emit('initGame', false, time, personalGame, host, roomId);
+    if (!personalGame) currentScreen.value = 'searching';
 }
+
 </script>
 
 <template>
-    <div class="play-type-buttons">
-
-        <template v-if="startScreen">
-            <button class="classic-button start-game-button" @click="emit('initGame', true, 5999)">
-                {{ textStrings.playSolo }}</button>
-            <button class="classic-button start-game-button" @click="startScreen = false">
-                {{ textStrings.playMultiplayer }}</button>
-        </template>
-
-        <template v-else>
-            <template v-if="!searching">
-                <div class="buttons-row">
-                    <button class="classic-button" @click="initMultiplayerGame(60)">1</button>
-                    <button class="classic-button" @click="initMultiplayerGame(120)">2</button>
-                    <button class="classic-button" @click="initMultiplayerGame(180)">3</button>
-                </div>
-                <div class="buttons-row">
-                    <button class="classic-button" @click="initMultiplayerGame(300)">5</button>
-                    <button class="classic-button" @click="initMultiplayerGame(600)">10</button>
-                    <button class="classic-button" @click="initMultiplayerGame(1200)">20</button>
-                </div>
+    <div class="interface-wrapper">
+        <menuTransitionComponent>
+            <template v-if="currentScreen === 'start'">
+                <ul class="play-type-buttons">
+                    <li> <button class="classic-button menu-button" @click="emit('initGame', true, 5999, false)">
+                            {{ textStrings.playSolo }}</button></li>
+                    <li> <button class="classic-button menu-button" @click="currentScreen = 'multiplayer'">
+                            {{ textStrings.playMultiplayer }}</button></li>
+                    <li>
+                        <button class="classic-button menu-button" @click="currentScreen = 'private'">
+                            {{ textStrings.playWithFriend }}</button>
+                    </li>
+                </ul>
             </template>
-            <SearchingComp v-else :text="textStrings.searching" />
-            <button class="classic-button reset-button" @click="reset">{{ textStrings.returnButton }}</button>
-        </template>
+            <template v-else>
+                <SearchingComp v-if="currentScreen === 'searching'" :text="textStrings.searching" />
+
+                <MultiplayerStartButtons v-else-if="currentScreen === 'multiplayer'" @send-time="initMultiplayerGame" />
+
+                <PrivateGame :key="2" v-else-if="currentScreen === 'private'" @start-game="initMultiplayerGame" />
+
+            </template>
+        </menuTransitionComponent>
+        <menuTransitionComponent>
+            <button v-if="currentScreen !== 'start'" class="classic-button reset-button" @click="reset">{{
+                textStrings.returnButton }}</button>
+        </menuTransitionComponent>
 
     </div>
 </template>
 
 <style lang="scss" scoped>
-.start-game-button {
-    width: 33%;
-    min-width: fit-content;
-
-    @media (max-width: 600px) {
-        width: fit-content;
-    }
-}
-
-
-.play-type-buttons {
+.interface-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
-    padding-top: 10rem;
+    padding: 10rem 0 2rem;
+    height: 100%;
+    box-sizing: border-box;
+
 
     .reset-button {
-        width: 33%;
-    }
+        width: 20rem;
+        height: 4.5rem;
+        margin-top: auto;
+        bottom: 1rem;
+        position: static;
+        transition: all 400ms ease-out;
 
-    .buttons-row {
-        display: flex;
-        justify-content: space-evenly;
-
-        button {
-            width: 25%;
+        &:hover,
+        &:focus {
+            box-shadow:
+                inset 10rem 0 0 0 rgb(240, 90, 90),
+                inset -10rem 0 0 0 rgb(240, 90, 90);
+            color: rgb(220, 220, 220);
         }
 
-        width: 100%;
-        gap: 1rem;
+        &:active {
+            transition: scale 100ms ease-in;
+            scale: 0.9;
+        }
     }
-
-    // justify-content: space-between;
-    margin-top: 2rem;
-    gap: 3rem;
-
-    // align-items: center;
-
 }
 </style>
