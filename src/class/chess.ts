@@ -1,9 +1,9 @@
 import type {
     ChessFigure, ChessColor, GameSave, Turn, TurnType, CellAttacked,
     DiagonalDirection, LinealDirection, LineDirectionsKey, GameState, MainDirection, PossibleTurns, FigureTurnType, Positions, DrawReason,
-} from "./chessTypes&Interfaces";
+} from "@/class/chessTypes&Interfaces";
 
-import { lineDirections } from './chessTypes&Interfaces'
+import { lineDirections } from '@/class/chessTypes&Interfaces'
 
 
 export class Cell {
@@ -1089,14 +1089,6 @@ export class ChessField {
 
     getHints(row: number, column: number): PossibleTurns {
         return this.checkTurns(row, column);
-    }
-
-    private reloadGame() {
-
-    }
-
-    exportGame() {
-
     }
 }
 

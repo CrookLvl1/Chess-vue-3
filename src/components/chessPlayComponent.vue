@@ -11,9 +11,8 @@ import { Player } from '@/class/player';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
 import GameEndComponent from '@/components/gameEndComponent.vue';
 import { useAppSettings } from '@/stores/appSettings';
-import StealTurnsComponent from './stealTurnsComponent.vue';
-import UserTurnClarifyComponent from './userTurnClarifyComponent.vue';
-
+import StealTurnsComponent from '@/components/stealTurnsComponent.vue';
+import UserTurnClarifyComponent from '@/components/userTurnClarifyComponent.vue';
 
 const appStore = useAppSettings();
 
@@ -23,7 +22,6 @@ const multiplayerStore = useMultiplayerStore();
 
 let soundVolume = computed(() => appStore.getVolume);
 const audioHrefs = useAudioPaths().paths;
-
 
 const genRandomSound = (hrefs: Array<string>): () => void => {
     const random = (min: number, max: number): number => {
@@ -398,6 +396,7 @@ watch((isLeft), (current) => {
     if (current)
         setGameEndInfo('checkmate', textStrings.value.enemyLeft, playerColor.value);
 })
+
 </script>
 
 <template>
@@ -420,6 +419,7 @@ watch((isLeft), (current) => {
                 <UserTurnClarifyComponent :key="4" v-if="userClarifyCell?.getFigure()" @clarify="chooseMoveType"
                     :figure="(userClarifyCell?.getFigure() as Figure)" />
             </transition-group>
+            
         </div>
         <ul id="chessField" class="chess-outer-list" @click.left="userClickHandler"
             :style="{ transform: rotate ? 'rotate(180deg)' : '' }">

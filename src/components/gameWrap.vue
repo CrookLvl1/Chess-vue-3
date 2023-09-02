@@ -4,7 +4,7 @@ import GameOptionsVue from '@/components/gameOptions.vue'
 import { useAppSettings } from '@/stores/appSettings';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
 import { ref, computed, defineAsyncComponent } from 'vue';
-import SearchingCompVue from './searchingComp.vue';
+import SearchingCompVue from '@/components/searchingComp.vue';
 
 const multiplayerStore = useMultiplayerStore();
 

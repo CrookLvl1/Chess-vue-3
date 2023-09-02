@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { LanguageId } from '@/class/chessTypes&Interfaces';
 import { useAppSettings } from '@/stores/appSettings';
-import { computed, watch, onMounted, reactive, ref } from 'vue';
+import { computed } from 'vue';
 const appStore = useAppSettings();
 
 const textStrings = computed(() => appStore.getStrings);
@@ -76,7 +76,7 @@ const stack: Array<string> = ['html, css', 'js', 'scss', 'typescript', 'vue 3', 
                             </a>
                         </li>
                         <li class="flex-center">
-                            <a class="flex-center" href="#" target="_blank">
+                            <a class="flex-center" href="https://www.linkedin.com/in/konstantin-maslennikov-b8329028b/" target="_blank">
                                 <div class="icon-img-wrapper"><img loading="lazy" src="@/assets/linkedin.png" alt=""></div>
                                 <span>LinkedIn</span>
                             </a>

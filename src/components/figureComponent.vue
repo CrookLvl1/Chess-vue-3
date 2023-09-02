@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { Figure } from '@/class/chess';
-import { type PropType, computed, watch } from 'vue';
+import { type PropType, computed } from 'vue';
 import { useImagePaths } from '@/stores/paths';
 
 const props = defineProps({

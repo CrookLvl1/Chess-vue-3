@@ -1,4 +1,4 @@
-import type { ChessColor, Timer } from "./chessTypes&Interfaces";
+import type { ChessColor } from "@/class/chessTypes&Interfaces";
 
 export class Player {
     constructor(id: number, time: number, color: ChessColor) {

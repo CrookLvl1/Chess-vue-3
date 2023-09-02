@@ -3,7 +3,7 @@ import { Player } from '@/class/player';
 import { useAppSettings } from '@/stores/appSettings';
 import { useImagePaths } from '@/stores/paths';
 import { computed, type PropType, ref } from 'vue';
-import MessengerWindowComponentVue from './messengerWindowComponent.vue';
+import MessengerWindowComponentVue from '@/components/messengerWindowComponent.vue';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
 import type { Message } from '@/class/chessTypes&Interfaces';
 const textStrings = computed(() => useAppSettings().getStrings);

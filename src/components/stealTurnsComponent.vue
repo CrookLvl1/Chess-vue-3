@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import type { ChessFigure, ChessColor } from '@/class/chessTypes&Interfaces';
 import { useAppSettings } from '@/stores/appSettings';
-import FigureComponent from './figureComponent.vue';
-import type { PropType } from 'vue';
+import FigureComponent from '@/components/figureComponent.vue';
+import { computed, type PropType } from 'vue';
 import { Figure } from '@/class/chess';
 
 const props = defineProps({
@@ -18,8 +18,9 @@ const props = defineProps({
 
 const textStrings = useAppSettings().getStrings;
 const emit = defineEmits({ 'stealTurns': (steal: ChessFigure | null) => true });
-
-
+// const figure = computed(() => new Figure(props.color, props.figureType)); 
+console.log("STEAL LOADED");
+const makeFigure = (type: ChessFigure) => new Figure(props.color, type);
 </script>
 <template>
     <div class="steal-menu-wrapper">
@@ -27,7 +28,7 @@ const emit = defineEmits({ 'stealTurns': (steal: ChessFigure | null) => true });
         <ul class="figures-steal-list" v-if="possibleSteal">
             <template v-for="figureType in possibleSteal" :key="figureType">
                 <li class="choosable-figure" @click="emit('stealTurns', figureType)">
-                    <FigureComponent :figure="new Figure(color, figureType)" />
+                    <FigureComponent :figure="makeFigure(figureType)" />
                 </li>
             </template>
         </ul>
@@ -35,7 +36,8 @@ const emit = defineEmits({ 'stealTurns': (steal: ChessFigure | null) => true });
             @click="emit('stealTurns', figureType)">
 
         </button>
-        <button @click="emit('stealTurns', null)" class="classic-button classic-button-small refuse-steal-btn">{{ textStrings.stealRefuse }}</button>
+        <button @click="emit('stealTurns', null)" class="classic-button classic-button-small refuse-steal-btn">{{
+            textStrings.stealRefuse }}</button>
     </div>
 </template>
 
@@ -64,14 +66,15 @@ const emit = defineEmits({ 'stealTurns': (steal: ChessFigure | null) => true });
 .refuse-steal-btn {
     flex: 1 1;
 }
+
 .figures-steal-list {
     display: flex;
     height: 100%;
     align-items: center;
     flex: 1 1;
+
     li {
-        width: 4rem;
-        height: 4rem;
+        width: 6rem;
+        height: 6rem;
     }
-}
-</style>
+}</style>

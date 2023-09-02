@@ -86,7 +86,6 @@ export const useAppSettings = defineStore('app-settings', () => {
             about: 'Начинающий front-end web разработчик, все технологии изучил самостоятельно в течение ~8 месяцев. Не имею коммерческого опыта разработки веб-приложений, однако имеется небольшой собственный pet-проект. Имеется небольшой некомерческий опыт работы с REST запросами.',
             current: 'Pet-проект. Шахматы с хищением (текущий) с использованием вебсокетов',
 
-
             whiteTurn: 'Ход белых',
             blackTurn: 'Ход чёрных',
             settings: 'Настройки',
@@ -176,6 +175,7 @@ export const useAppSettings = defineStore('app-settings', () => {
             link: 'link',
             about: 'I am a junior front-end web developer, learned my tech stack by myself in about 8 months.I do not have any commercial experience, but have a pet project. Also, i have some work experience with websockets and REST requests.',
             current: 'Pet-project. Plunder chess (current) using websockets',
+
 
             whiteTurn: `White's turn`,
             blackTurn: `Black's turn`,

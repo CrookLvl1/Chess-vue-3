@@ -17,6 +17,7 @@ const props = defineProps({
     column: { type: Number, required: true }
 })
 
+const makeFigure = (type: ChessFigure) => new Figure(props.color, type);
 </script>
 
 <template>
@@ -24,11 +25,13 @@ const props = defineProps({
         <li>
             <h3>{{ useAppSettings().getStrings.choose }}:</h3>
         </li>
-        <template v-for="figureType in figures" :key="figureType">
-            <li :data-type="figureType" class="choosable-figure" @click="emit('changeFigure', figureType)">
-                <FigureComponent :figure="new Figure(color, figureType)" />
-            </li>
-        </template>
+        <ul class="figures">
+            <template v-for="figureType in figures" :key="figureType">
+                <li :data-type="figureType" class="choosable-figure" @click="emit('changeFigure', figureType)">
+                    <FigureComponent :figure="makeFigure(figureType)" />
+                </li>
+            </template>
+        </ul>
     </ul>
 </template>
 
@@ -43,13 +46,21 @@ const props = defineProps({
     background-color: rgba(53, 90, 126, 0.9);
     align-items: center;
     box-sizing: border-box;
+    width: 100%;
     padding: 0 20px;
-    // gap: 0.75rem;
+    gap: 0.75rem;
     transition: all 250ms ease-out;
 
+    ul.figures {
+        display: flex;
+        gap: 1rem;
+        li{
+            width: 5rem;
+            height: 5rem;
+        }
+    }
     h3 {
         font-size: 1.5rem;
     }
 }
-
 </style>

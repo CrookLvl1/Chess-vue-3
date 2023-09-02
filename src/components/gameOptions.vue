@@ -3,9 +3,9 @@ import SearchingComp from '@/components/searchingComp.vue'
 import { useAppSettings } from '@/stores/appSettings';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
 import { computed, ref, watch } from 'vue';
-import MultiplayerStartButtons from './multiplayerStartButtons.vue';
-import PrivateGame from './privateGameComponent.vue';
-import menuTransitionComponent from './menuTransitionComponent.vue';
+import MultiplayerStartButtons from '@/components/multiplayerStartButtons.vue';
+import PrivateGame from '@/components/privateGameComponent.vue';
+import menuTransitionComponent from '@/components/menuTransitionComponent.vue';
 
 type CurrentScreen = 'start' | 'searching' | 'multiplayer' | 'private' | 'searching';
 

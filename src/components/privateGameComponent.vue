@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-import MultiplayerStartButtons from './multiplayerStartButtons.vue';
+import MultiplayerStartButtons from '@/components/multiplayerStartButtons.vue';
 import { useAppSettings } from '@/stores/appSettings';
 import { computed, ref, watch, type InputHTMLAttributes } from 'vue';
-import SearchingCompVue from './searchingComp.vue';
+import SearchingCompVue from '@/components/searchingComp.vue';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
-import menuTransitionComponent from './menuTransitionComponent.vue';
+import menuTransitionComponent from '@/components/menuTransitionComponent.vue';
 
 const multiplayerStore = useMultiplayerStore();
 const textStrings = computed(() => useAppSettings().getStrings);

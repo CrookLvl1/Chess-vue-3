@@ -4,7 +4,7 @@ import { useMultiplayerStore } from '@/stores/multiplayerStore';
 import { ref, computed, watch, onMounted, reactive } from 'vue';
 import { useAppSettings } from '@/stores/appSettings'
 import type { Player } from '@/class/player';
-import MessageComponent from './messageComponent.vue';
+import MessageComponent from '@/components/messageComponent.vue';
 const emit = defineEmits(['close']);
 
 const multiplayerStore = useMultiplayerStore();

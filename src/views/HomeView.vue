@@ -20,4 +20,8 @@ import FooterComponent from '@/components/footerComponent.vue';
     </main>
   </div>
 </template>
-<style lang="scss"></style> 
+<style lang="scss">
+  footer {
+    margin-top: auto;
+  }
+</style> 

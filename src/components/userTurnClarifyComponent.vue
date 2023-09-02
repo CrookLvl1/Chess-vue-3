@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { Figure } from '@/class/chess';
-import type { ChessFigure, ChessColor, TurnType, FigureTurnType } from '@/class/chessTypes&Interfaces';
-import FigureComponent from './figureComponent.vue';
+import type { ChessFigure, ChessColor, FigureTurnType } from '@/class/chessTypes&Interfaces';
+import FigureComponent from '@/components/figureComponent.vue';
 import { computed, type PropType } from 'vue';
 import { useAppSettings } from '@/stores/appSettings';
 const props = defineProps({
@@ -16,17 +16,17 @@ const color = computed<ChessColor>(() => props.figure.getColor());
 const mainType = computed<ChessFigure>(() => props.figure.getType());
 const stolenType = computed<ChessFigure>(() => props.figure.getStolenType() as ChessFigure);
 
-
+const makeFigure = (type: ChessFigure) => new Figure(color.value, type);
 </script>
 <template>
     <div class="user-clarify-wrapper">
         <ul class="type-select">
             <h5>{{ useAppSettings().getStrings.chooseTurn }}:</h5>
             <li class="choosable-figure" @click="emit('clarify', 'own')">
-                <FigureComponent :figure="new Figure(color, mainType)" />
+                <FigureComponent :figure="makeFigure(mainType)" />
             </li>
             <li class="choosable-figure" @click="emit('clarify', 'stolen')">
-                <FigureComponent :figure="new Figure(color, stolenType)" />
+                <FigureComponent :figure="makeFigure(stolenType)" />
             </li>
         </ul>
     </div>
@@ -57,5 +57,9 @@ const stolenType = computed<ChessFigure>(() => props.figure.getStolenType() as C
     display: flex;
     align-items: center;
     gap: 1.5rem;
+    li {
+        height: 6rem;
+        width: 6rem;
+    }
 }
 </style>

@@ -1,11 +1,10 @@
 import type { ChessColor, Info, Message, MessageInfo, PlayersInfo, TurnInfo, User } from "@/class/chessTypes&Interfaces";
 import { Player } from "@/class/player";
-import { localIp, securityCode, webSocketPort } from "@/web-socket-server/base";
+import { securityCode, webSocketPort } from "@/web-socket-server/base";
 import { defineStore } from "pinia";
 import { reactive, computed, ref } from 'vue'
 
-
-console.log(`ws://${localIp}:${webSocketPort}`)
+const protocol = window.location.protocol.includes('https') ? 'wss' : 'ws';
 export const useMultiplayerStore = defineStore('multiplayer', () => {
     const soloPlayerInfo = { id: 0, time: 5999 };
 
@@ -32,7 +31,6 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
 
     const resetRoomId = () => currentRoomId.value = '';
     const resetRoomNotFound = () => roomNotFound.value = false;
-
 
     const resetInfo = (): void => {
         turn.fromRow = turn.toRow = turn.fromColumn = turn.toColumn = 0;
@@ -118,7 +116,8 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
     }
 
     const initMultiplayerGame = (time: number, user: User, personalRoom: boolean, host?: boolean, roomId?: string) => {
-        let url = `ws://${localIp}:${webSocketPort}?authKey=${securityCode}?&time=${time}`;
+        let url = `${protocol}://${window.location.hostname}:${webSocketPort}?authKey=${securityCode}?&time=${time}`;
+        
         console.log(`personal = ${personalRoom}, host = ${host}, roomid = ${roomId}`)
         if (personalRoom) {
             url += `?&personalRoom=${personalRoom}`;

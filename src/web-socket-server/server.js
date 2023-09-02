@@ -127,7 +127,7 @@ const createGame = (time, roomId) => {
 //Server
 wss.on("connection", (ws, req) => {
     if (getPropFromUrl(req.url, 'authKey=') !== securityCode) {
-        console.log('Unsecure connection');
+        console.log('Insecure connection');
         ws.close();
         return;
     }
