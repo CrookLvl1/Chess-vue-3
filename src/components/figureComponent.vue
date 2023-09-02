@@ -16,7 +16,9 @@ const href = computed<string>(() => paths.get(props.figure?.getSrc()));
 </script>
 <template>
     <div class="figure-wrapper">
-        <img loading="lazy" v-if="figure" :src="href" alt="">
+        <div class="main-img-wrapper">
+            <img loading="lazy" v-if="figure" :src="href" alt="">
+        </div>
         <img loading="lazy" class="stolen" v-if="figure?.getStolenType()"
             :src="paths.get(figure.getStolenType() + figure.getColor() + '.png')" alt="">
     </div>
@@ -27,12 +29,21 @@ const href = computed<string>(() => paths.get(props.figure?.getSrc()));
     height: 100%;
     position: relative;
     transition: all 300ms cubic-bezier(.89, .01, .12, 1.04);
+    display: flex;
+    align-items: center;
+    justify-content: center
 }
 
-img {
-    width: 100%;
-    height: 100%;
+.main-img-wrapper {
+    width: 84%;
+    height: 84%;
+    img {
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+    }
 }
+
 
 img.stolen {
     position: absolute;

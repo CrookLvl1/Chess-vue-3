@@ -117,7 +117,6 @@ const checkGameResult = (): [GameState, GameEndReason] => {
 
 //function that works after player moved his figure. switches various variables in field obj
 const switchGameStates = (): void => {
-    console.log("SWITCH GAME STATES")
     field.switchTurn();
     field.calcKingSecure(turn.value);
     userClarfiyToCell.value = null;
@@ -182,7 +181,6 @@ const turnEnding = (cellFrom: Cell, cellToFigure: Figure | null, figureTurnType:
 
     const cellFromFigure = cellFrom.getFigure() as Figure;
 
-    console.log('TURN ENDING', cellFromFigure, cellToFigure, figureTurnType, turnType);
     possibleSteal.value = checkStealingTypes(turnType, cellToFigure, cellFromFigure, figureTurnType);
 
     if (field.moveFigure(fromRow, fromColumn, toRow.value, toColumn.value, turnType, figureTurnType)) cellCoords.value = [toRow.value, toColumn.value];
@@ -191,7 +189,6 @@ const turnEnding = (cellFrom: Cell, cellToFigure: Figure | null, figureTurnType:
     playChessSound();
     resetClick(cellFrom)
     if (handleEvents.value) {
-        console.log('handling event turn ending')
         switchGameStates()
         multiplayerStore.sendTurnInfo({ fromRow, fromColumn, toRow: toRow.value, toColumn: toColumn.value, figureType: null, figureTurnType, stolenType: null, turnType })
     };
@@ -200,14 +197,7 @@ const turnEnding = (cellFrom: Cell, cellToFigure: Figure | null, figureTurnType:
 }
 
 const chooseMoveType = (figureTurnType: FigureTurnType) => {
-    console.log("CHOOSE MOVE TYPE ", figureTurnType, userClarifyCell.value?.getFigure(), userClarfiyToCell.value?.getFigure());
-
-    console.log(userClarifyCell.value);
-
-    console.log(userClarfiyToCell.value)
-
     turnEnding((userClarifyCell.value as Cell), (userClarfiyToCell.value as Cell).getFigure(), figureTurnType);
-    console.log("END CHOSING")
 }
 
 const changeFigure = (type: ChessFigure) => {
@@ -251,18 +241,15 @@ const getAvailableSteal = (cellFromFigure: Figure, cellToFigure: Figure, figureT
 
 const checkStealingTypes = (turnType: TurnType, cellToFigure: Figure | null, cellFromFigure: Figure, figureTurnType: FigureTurnType): Array<ChessFigure> => {
     let resultArr: Array<ChessFigure> = [];
-    console.log('Check stealing', turnType, cellToFigure, cellFromFigure, 'cell above = ', field.getCell(fromRow, toColumn.value));
 
     if (turnType === 'en passant') resultArr = getAvailableSteal(cellFromFigure, field.getCell(fromRow, toColumn.value).getFigure() as Figure, figureTurnType);
     else if (cellToFigure) resultArr = getAvailableSteal(cellFromFigure, cellToFigure, figureTurnType);
 
-    console.log("POSSIBLE STEALS = ", resultArr);
     return resultArr;
 }
 
 const resetClick = (activeCell: Cell) => {
     clicked = false;
-    console.log("ACTIVE CELL = ", activeCell)
     activeCell.switchSelected();
     userClarifyCell.value = null;
     switchHints(cellsToHint, false);
@@ -318,7 +305,6 @@ const userClickHandler = (ev: MouseEvent) => {
 
         const cellFromCheck: Cell = field.getCell(fromRow, fromColumn);
 
-        console.log(cellFromCheck, cellFromCheck.getFigure());
         //Same color or no hint
         const cellToCheck: Cell = field.getCell(toRow.value, toColumn.value);
         if (!cellToCheck.getHint()) {
@@ -347,7 +333,6 @@ const userClickHandler = (ev: MouseEvent) => {
             stolenTurnType: TurnType | null = cellFromFigure.getStolenType() ? field.getTurnType(fromRow, fromColumn, toRow.value, toColumn.value, 'stolen') : null;
 
         if (ownTurn && cellsToHint.stolen.includes(cellToCheck) && stolenTurnType && ownTurnType !== stolenTurnType) {
-            console.log("DIFFERENT TURN TYPES", ownTurnType, stolenTurnType);
 
             userClarifyCell.value = cellFromCheck;
 
@@ -382,12 +367,10 @@ let isSurrendered = computed(() => multiplayerStore.surrenderLose),
 
 //enemy moved figure
 watch(multiplayerStore.turn, (turnInfo: TurnInfo) => {
-    console.log(turnInfo);
     playChessSound();
     // DO STOLEN INFO MESSAGE
     field.moveFigure(turnInfo.fromRow, turnInfo.fromColumn, turnInfo.toRow, turnInfo.toColumn, turnInfo.turnType, turnInfo.figureTurnType);
 
-    console.log('stolen type = ', turnInfo.stolenType);
     if (turnInfo.stolenType) {
         field.updateStolenType(turnInfo.stolenType);
         (field.getCell(turnInfo.toRow, turnInfo.toColumn).getFigure() as Figure).setStolenType(turnInfo.stolenType);

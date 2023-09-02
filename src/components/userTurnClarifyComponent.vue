@@ -15,7 +15,6 @@ const emit = defineEmits({
 const color = computed<ChessColor>(() => props.figure.getColor());
 const mainType = computed<ChessFigure>(() => props.figure.getType());
 const stolenType = computed<ChessFigure>(() => props.figure.getStolenType() as ChessFigure);
-console.log(props.figure)
 
 
 </script>

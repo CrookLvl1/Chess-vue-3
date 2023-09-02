@@ -426,9 +426,6 @@ h3 {
 
 
 
-                            &.mail .icon-img-wrapper {
-                                height: 1.34rem;
-                            }
                         }
                     }
 
@@ -631,8 +628,6 @@ h3 {
                                 }
                             }
                         }
-
-                        .about-me {}
                     }
                 }
 

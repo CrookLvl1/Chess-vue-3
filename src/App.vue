@@ -325,7 +325,7 @@ body {
   height: 100dvh;
   box-sizing: border-box;
   background-color: rgb(91, 143, 194);
-  background: linear-gradient(0deg, rgb(121, 165, 209), rgb(110, 133, 178))
+  background: linear-gradient(0deg, rgb(114, 125, 154), rgb(132, 132, 180))
 }
 
 .play-type-buttons {

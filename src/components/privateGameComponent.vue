@@ -27,13 +27,10 @@ watch(hostId, (current) => roomId.value = current);
 let roomNotFound = computed<boolean>(() => multiplayerStore.isRoomNotFound)
 
 watch(roomNotFound, (current) => {
-    console.log("ROOMNOTUOND = ", current);
 
     if (current) {
-        console.log('before waiting = ', waiting.value)
         waiting.value = false;
         multiplayerStore.resetRoomId()
-        console.log('waiting = ', waiting.value)
     }
 })
 

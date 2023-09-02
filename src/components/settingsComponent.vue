@@ -43,7 +43,6 @@ const fileInputHandler = (inputEvent: Event) => {
 const editName = () => {
     (async () => {
         showCurrentName.value = false;
-        console.log(editNameInput.value);
     })().then(() => editNameInput.value?.focus())
 }
 

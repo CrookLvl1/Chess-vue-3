@@ -69,5 +69,9 @@ const emit = defineEmits({ 'stealTurns': (steal: ChessFigure | null) => true });
     height: 100%;
     align-items: center;
     flex: 1 1;
+    li {
+        width: 4rem;
+        height: 4rem;
+    }
 }
 </style>

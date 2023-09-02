@@ -62,7 +62,6 @@ let bg = computed<CellColor>(() => {
 .cell-wrapper {
     position: relative;
     display: block;
-    padding: 1%;
     box-sizing: border-box;
     width: 12.5%;
     height: 100%;
