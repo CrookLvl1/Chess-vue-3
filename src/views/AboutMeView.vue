@@ -20,7 +20,7 @@ const stack: Array<string> = ['html, css', 'js', 'scss', 'typescript', 'vue 3', 
 <template>
     <div class="about-me-wrapper">
         <div class="header">
-            <div class="date">01.09.2023</div>
+            <div class="date">03.09.2023</div>
             <select @change="languageChangeHandler" name="language" id="language">
                 <option v-for="id in appStore.getIds" :value="id" :selected="id === langId">{{ id }}</option>
             </select>

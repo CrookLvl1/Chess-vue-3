@@ -68,7 +68,7 @@ onMounted(() => {
         entries.forEach((entry: IntersectionObserverEntry) => {
             if (entry.isIntersecting) {
                 setTimeout(() => {
-                    observer.unobserve(entry.target);
+                    observer.unobserve(entry.target);   
                     const msg = messages.value.find((message: Message) => message.id === +((entry.target as HTMLElement).dataset.id as string));
                     if (msg) {
                         msg.read = true;
@@ -79,7 +79,8 @@ onMounted(() => {
             }
         })
     }, { root: messagesWrapper.value, rootMargin: '0px', threshold: 0.8 });
-
+    
+    console.log("OBSERVER INIT", observer);
     watch(opponentMessages, (current: Array<Element>, previous: Array<Element>) => {
         if (current.length === 0) return;
         observer.observe(current[current.length - 1]);

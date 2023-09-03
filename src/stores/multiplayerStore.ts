@@ -5,14 +5,10 @@ import { defineStore } from "pinia";
 import { reactive, computed, ref } from 'vue'
 
 let securityCode = import.meta.env.VITE_securityCode || 'qwerty123';
-let webSocketPort = import.meta.env.VITE_port || 8000;
-let webSocketAdress = import.meta.env.VITE_adress;
+let webSocketAdress = import.meta.env.VITE_webSocketAdress;
 
 
-console.log(webSocketPort, webSocketAdress);
-
-const protocol = window.location.protocol.includes('https') ? 'wss' : 'ws';
-
+console.log(webSocketAdress);
 export const useMultiplayerStore = defineStore('multiplayer', () => {
     const soloPlayerInfo = { id: 0, time: 5999 };
 
@@ -124,7 +120,7 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
     }
 
     const initMultiplayerGame = (time: number, user: User, personalRoom: boolean, host?: boolean, roomId?: string) => {
-        let url = `${protocol}://${webSocketAdress}:${webSocketPort}?authKey=${securityCode}?&time=${time}`;
+        let url = `${webSocketAdress}?authKey=${securityCode}?&time=${time}`;
         
         console.log(`personal = ${personalRoom}, host = ${host}, roomid = ${roomId}`)
         if (personalRoom) {
