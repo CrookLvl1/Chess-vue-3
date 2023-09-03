@@ -4,7 +4,7 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/first-vite-project',
+  base: '/Chess-vue-3',
   plugins: [
     vue()
   ],
