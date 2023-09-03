@@ -1,12 +1,18 @@
 import type { ChessColor, Info, Message, MessageInfo, PlayersInfo, TurnInfo, User } from "@/class/chessTypes&Interfaces";
 import { Player } from "@/class/player";
-import { securityCode, webSocketPort } from "@/web-socket-server/base";
+// import { securityCode, webSocketPort } from "@/web-socket-server/base";
 import { defineStore } from "pinia";
 import { reactive, computed, ref } from 'vue'
 
-const protocol = window.location.protocol.includes('https') ? 'wss' : 'ws';
+let securityCode = import.meta.env.VITE_securityCode || 'qwerty123';
+let webSocketPort = import.meta.env.VITE_port || 8000
 
-new WebSocket('ws://https://api-chess-vue-3-websocket.onrender.com:8000')
+
+console.log(securityCode, webSocketPort)
+
+
+
+const protocol = window.location.protocol.includes('https') ? 'wss' : 'ws';
 
 export const useMultiplayerStore = defineStore('multiplayer', () => {
     const soloPlayerInfo = { id: 0, time: 5999 };
