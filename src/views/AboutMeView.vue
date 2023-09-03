@@ -13,9 +13,6 @@ const languageChangeHandler = (ev: Event) => {
     appStore.saveToLocal();
 }
 
-
-const stack: Array<string> = ['html, css', 'js', 'scss', 'typescript', 'vue 3', 'vuex || pinia', 'vite || webpack'];
-
 </script>
 <template>
     <div class="about-me-wrapper">
@@ -129,7 +126,7 @@ const stack: Array<string> = ['html, css', 'js', 'scss', 'typescript', 'vue 3', 
                         <h3>{{ textStrings.experience }}</h3>
                         <div class="progress">
                             <span>01.07.2023</span>
-                            <span>{{ textStrings.current }}<a href="/" target="_blank">{{ textStrings.link }}</a></span>
+                            <span>{{ textStrings.current }}<router-link to="/" target="_blank">{{ textStrings.link }}</router-link></span>
                             <span>02.09.2023</span>
                         </div>
                     </div>
@@ -155,7 +152,7 @@ const stack: Array<string> = ['html, css', 'js', 'scss', 'typescript', 'vue 3', 
     </div>
 </template>
 <style lang="scss" scoped>
-a {
+a, router-link {
     gap: 0.5rem;
     position: relative;
     width: fit-content;

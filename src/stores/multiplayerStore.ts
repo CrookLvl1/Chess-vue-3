@@ -4,8 +4,8 @@ import { Player } from "@/class/player";
 import { defineStore } from "pinia";
 import { reactive, computed, ref } from 'vue'
 
-let securityCode = import.meta.env.VITE_securityCode || 'qwerty123';
-let webSocketAdress = import.meta.env.VITE_webSocketAdress;
+let securityCode = import.meta.env.VITE_securityCode || import.meta.env.VITE_securityCodeLast;
+let webSocketAdress = import.meta.env.VITE_webSocketAdress || import.meta.env.VITE_webSocketAdressLast;
 
 
 console.log(webSocketAdress);
@@ -129,6 +129,7 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
             else if (roomId && roomId?.length > 0) url += `?&roomId=${roomId}`;
         }
 
+        console.log(url);   
         ws = new WebSocket(url);
 
         ws.addEventListener('message', (msgEv: MessageEvent) => {
