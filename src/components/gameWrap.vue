@@ -36,7 +36,7 @@ const ChessPlayComponent = defineAsyncComponent(() => import('@/components/chess
 <template>
     <div class="game-wrapper">
         <transition name="fade">
-            <SearchingCompVue class="loading" v-show="drawComponent" :text="useAppSettings().getStrings.loading + '...'" />
+            <SearchingCompVue class="loading" :connection="false" v-show="drawComponent" :text="useAppSettings().getStrings.loading + '...'" />
         </transition>
         <transition appear name="from-above">
             <ChessPlayComponent v-if="drawComponent" :solo-play="initSoloPlay" :player="(player as Player)"

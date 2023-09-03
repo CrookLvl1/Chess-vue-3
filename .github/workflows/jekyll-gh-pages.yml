@@ -1,6 +1,10 @@
 # Simple workflow for deploying static content to GitHub Pages
 name: Deploy static content to Pages
 
+env:
+  VITE__securityCode: 'fd7b19876f88c601399e17429cd5356c'
+  VITE_webSocketAdress: 'wss://api-chess-vue-3-websocket.onrender.com'
+
 on:
   # Runs on pushes targeting the default branch
   push:

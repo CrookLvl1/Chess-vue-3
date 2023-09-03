@@ -197,7 +197,7 @@ const copyToClipboard = () => {
     gap: 2rem;
     flex-wrap: wrap;
     align-items: center;
-
+    justify-content: center;
     .id-wrapper {
         position: relative;
 

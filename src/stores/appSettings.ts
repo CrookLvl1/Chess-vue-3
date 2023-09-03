@@ -12,6 +12,7 @@ export const useAppSettings = defineStore('app-settings', () => {
             whiteWin: 'Белые победили',
             blackWin: 'Чёрные победили',
             checkmate: 'Шах и мат',
+            reset: 'Перезагрузить сервер',
             draw: "Ничья",
             returnButton: 'Вернуться',
             play: 'Играть',
@@ -99,7 +100,7 @@ export const useAppSettings = defineStore('app-settings', () => {
         },
         eng: {
             gameTitle: 'Plunder chess',
-
+            reset: 'Reload server',
             choose: 'Choose figure',
             whiteWin: `White won`,
             blackWin: `Black won`,
