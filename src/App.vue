@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+// import HomeViewVue from './views/HomeView.vue';
 
 
 </script>
 
 <template>
+  <!-- <HomeViewVue class="game-bg" /> -->
   <RouterView class="game-bg" />
 </template>
 
@@ -219,7 +221,9 @@ html {
     &:active,
     &:focus {
       transform: scale(0.8);
-      &::after, &::before {
+
+      &::after,
+      &::before {
         box-shadow: 0 0 1rem 0 black;
       }
     }
@@ -467,4 +471,5 @@ body {
 
 footer {
   margin-top: auto;
-}</style>
+}
+</style>

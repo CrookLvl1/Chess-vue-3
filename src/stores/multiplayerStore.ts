@@ -5,6 +5,9 @@ import { defineStore } from "pinia";
 import { reactive, computed, ref } from 'vue'
 
 const protocol = window.location.protocol.includes('https') ? 'wss' : 'ws';
+
+new WebSocket('ws://https://api-chess-vue-3-websocket.onrender.com:8000')
+
 export const useMultiplayerStore = defineStore('multiplayer', () => {
     const soloPlayerInfo = { id: 0, time: 5999 };
 
