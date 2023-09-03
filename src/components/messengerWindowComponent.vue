@@ -12,7 +12,9 @@ const textStrings = computed(() => useAppSettings().getStrings);
 
 const player = computed<Player>(() => multiplayerStore.getPlayer);
 const enemyPlayer = computed<Player>(() => multiplayerStore.getEnemyPlayer);
+
 const messagesWrapper = ref<HTMLUListElement>();
+const opponentMessages = reactive<Array<HTMLLIElement>>([]);
 
 
 const text = ref<string>('');
@@ -20,6 +22,8 @@ const text = ref<string>('');
 let messages = computed<Array<Message>>(() => {
     return multiplayerStore.getMessages;
 });
+
+
 
 let readMessages = reactive<Array<number>>([]);
 
@@ -60,7 +64,7 @@ const sendReadMessagesDelayed = (() => {
 })();
 
 
-const opponentMessages = reactive<Array<HTMLLIElement>>([]);
+// setInterval(() => console.log(messages.value), 1500)
 
 onMounted(() => {
     //OBSERVING ONLY MESSAGES THAT HAS BEEN SENT BY THE OPPONENT
@@ -68,7 +72,7 @@ onMounted(() => {
         entries.forEach((entry: IntersectionObserverEntry) => {
             if (entry.isIntersecting) {
                 setTimeout(() => {
-                    observer.unobserve(entry.target);   
+                    observer.unobserve(entry.target);
                     const msg = messages.value.find((message: Message) => message.id === +((entry.target as HTMLElement).dataset.id as string));
                     if (msg) {
                         msg.read = true;
@@ -79,9 +83,8 @@ onMounted(() => {
             }
         })
     }, { root: messagesWrapper.value, rootMargin: '0px', threshold: 0.8 });
-    
-    console.log("OBSERVER INIT", observer);
-    watch(opponentMessages, (current: Array<Element>, previous: Array<Element>) => {
+
+    watch(opponentMessages, (current: Array<Element>) => {
         if (current.length === 0) return;
         observer.observe(current[current.length - 1]);
     })
@@ -102,7 +105,7 @@ onMounted(() => {
                 <ul ref="messagesWrapper" class="messages-list">
 
                     <template v-for="message in messages" :key="message.id">
-                        <li v-if="!message.currentUserSender" ref="opponentMessages" :data-id="message.id">
+                        <li v-if="!message.currentUserSender" :ref="el => opponentMessages.push(el as HTMLLIElement)" :data-id="message.id">
                             <message-component :player="message.currentUserSender ? player : enemyPlayer"
                                 :message="message" />
                         </li>
@@ -233,18 +236,19 @@ div.messenger-wrapper {
         &::-webkit-scrollbar {
             width: 0.5rem;
             border-radius: 12px;
-            
+
             &-thumb {
                 border-radius: 12px;
                 background-color: rgb(179, 249, 255, 1);
+
                 &:hover {
-                    background-color: rgb(179, 249, 255, .7); 
+                    background-color: rgb(179, 249, 255, .7);
                 }
 
                 &:active {
                     background-color: rgb(78, 78, 78);
                 }
-                
+
             }
         }
     }
