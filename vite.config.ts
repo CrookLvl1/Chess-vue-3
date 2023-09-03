@@ -4,14 +4,9 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/chess-vue-3/',
-  server: {
-    host: true,
-    port: 5173
-  },
+  base: '/first-vite-project',
   plugins: [
     vue()
-    
   ],
   resolve: {
     alias: {
