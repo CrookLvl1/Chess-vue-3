@@ -55,8 +55,8 @@ const makeFigure = (type: ChessFigure) => new Figure(props.color, type);
         display: flex;
         gap: 1rem;
         li{
-            width: 5rem;
-            height: 5rem;
+            width: 6rem;
+            height: 6rem;
         }
     }
     h3 {

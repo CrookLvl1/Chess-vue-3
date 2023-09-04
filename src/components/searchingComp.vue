@@ -1,43 +1,31 @@
 <script lang="ts" setup>
-import { useAppSettings } from '@/stores/appSettings';
-import { computed } from 'vue';
-const textStrings = computed(() => useAppSettings().getStrings);
+import LoadingServerComponent from '@/components/loadingServerComponent.vue';
 
 const props = defineProps({
     text: { type: String, required: true },
     connection: { type: Boolean, required: false, default: true }
 })
 
-const reset = () => {
-    fetch(`https://api.render.com/deploy/srv-cjq3jc61208c73filrv0?key=mM-T4na_nlo`)
-        .catch(() => console.log("RESET"));
-};
+
+
 
 
 </script>
 <template>
     <transition name="appear-from-right">
-        <keep-alive v-if="connection">
-            <div class="searching-wrapper">
-                <template v-if="connection">
-                    <div class="online-wrapper">
-                        <button class="classic-button" @click="reset">
-                            {{ textStrings.reset }}
-                        </button>
-                    </div>
-                </template>
-                <div class="loading">
-                    <div class="text">{{ text }}</div>
-                    <div class="animation">
-                        <div class="circle"></div>
-                        <div class="circle"></div>
-                        <div class="circle"></div>
-                        <div class="circle"></div>
-                        <div class="circle"></div>
-                    </div>
+        <div class="searching-wrapper">
+            <LoadingServerComponent v-if="connection" />
+            <div class="loading">
+                <div class="text">{{ text }}</div>
+                <div class="animation">
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="circle"></div>
                 </div>
             </div>
-        </keep-alive>
+        </div>
     </transition>
 </template>
 <style lang="scss">
@@ -72,14 +60,13 @@ const reset = () => {
     display: flex;
     // width: 100%;
     justify-content: center;
-    gap: 1rem;
+    gap: 2rem;
     padding: 1rem;
     align-items: center;
     flex-wrap: wrap;
     flex-direction: column;
     width: 100%;
 
-    .online-wrapper,
     .loading {
         display: flex;
         gap: 1.5rem;
@@ -88,14 +75,8 @@ const reset = () => {
         justify-content: center;
         flex-wrap: wrap;
     }
-    .online-wrapper {
-        flex-direction: column;
-        gap: 1rem;
-        span {
-            font-size: 2rem;
-        }
-        margin-bottom: 2rem;
-    }
+
+
     .animation {
         display: flex;
         gap: 1rem;

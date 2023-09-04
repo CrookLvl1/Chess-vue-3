@@ -448,13 +448,24 @@ body {
 
 
 }
+@keyframes choose-figure {
+  0% {
+    box-shadow: 0 0 1rem 0 rgb(255, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 1rem 0 rgb(252, 58, 58);
+  }
+  100% {
+    box-shadow: 0 0 1rem 0 rgb(255, 255, 0);
+  }
+}
 
 .choosable-figure {
   width: 5rem;
   height: 5rem;
   padding: 1%;
   box-sizing: border-box;
-
+  animation: choose-figure 2s linear infinite;
   // background-color: rgb(107, 142, 62);
   display: block;
   cursor: pointer;
@@ -465,6 +476,7 @@ body {
   &:hover {
     background-color: rgb(200, 212, 103);
     box-shadow: 0 0 10px 0 rgb(200, 212, 103);
+    animation: none;
   }
 }
 

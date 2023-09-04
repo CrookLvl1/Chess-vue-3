@@ -41,6 +41,7 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
         turn.figureTurnType = 'own';
         turn.turnType = 'default';
         turn.stolenType = turn.figureType = null;
+        readyState.value = 3;
 
         resetRoomId();
         resetRoomNotFound();
@@ -63,6 +64,7 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
     let surrenderLose = ref<Boolean>(false);
 
     let ws: WebSocket;
+    let readyState = ref<number>(0);
 
 
 
@@ -122,15 +124,15 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
     const initMultiplayerGame = (time: number, user: User, personalRoom: boolean, host?: boolean, roomId?: string) => {
         let url = `${webSocketAdress}?authKey=${securityCode}?&time=${time}`;
         
-        console.log(`personal = ${personalRoom}, host = ${host}, roomid = ${roomId}`)
         if (personalRoom) {
             url += `?&personalRoom=${personalRoom}`;
             if (host) url += `?&host=true`;
             else if (roomId && roomId?.length > 0) url += `?&roomId=${roomId}`;
         }
 
-        console.log(url);   
         ws = new WebSocket(url);
+        readyState.value = 0;
+
 
         ws.addEventListener('message', (msgEv: MessageEvent) => {
             console.log(msgEv.data);
@@ -139,7 +141,6 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
             const data: Info = JSON.parse(msgEv.data);
 
             console.log(data);
-            console.log(data.type);
 
             if (data.pingTime) {
                 const ping: number = new Date().getTime() - data.pingTime;
@@ -205,7 +206,12 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
 
             }
         })
+
+        ws.addEventListener('open', () => readyState.value = 1);
+        ws.addEventListener('close', () => readyState.value = 3);
+        ws.addEventListener('error', () => readyState.value = 3);
     }
+
 
 
 
@@ -265,8 +271,10 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
         }))
     }
 
+    let getReadyState = computed(() => readyState.value)
+
     return {
-        turn, getPlayer, getEnemyPlayer,
+        turn, getPlayer, getEnemyPlayer, getReadyState,
         sendTurnInfo, initSinglePlayer, initMultiplayerGame, disconnectServer,
         leaveLose, surrenderLose, resetInfo, sendSurrender, sendMessage, getMessages,
         sendReadMessages, getRoomId, isRoomNotFound, resetRoomId, resetRoomNotFound,

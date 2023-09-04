@@ -73,7 +73,9 @@ const languageChangeHandler = (ev: Event) => {
                             </a>
                         </li>
                         <li class="flex-center">
-                            <a class="flex-center" href="https://www.linkedin.com/in/konstantin-maslennikov-b8329028b/" target="_blank">
+                            <!-- TEMPORARY UNAVAILABLE -->
+                            <a class="flex-center linkedin"
+                                href="https://www.linkedin.com/in/konstantin-maslennikov-b8329028b/" target="_blank">
                                 <div class="icon-img-wrapper"><img loading="lazy" src="@/assets/linkedin.png" alt=""></div>
                                 <span>LinkedIn</span>
                             </a>
@@ -126,7 +128,8 @@ const languageChangeHandler = (ev: Event) => {
                         <h3>{{ textStrings.experience }}</h3>
                         <div class="progress">
                             <span>01.07.2023</span>
-                            <span>{{ textStrings.current }}<router-link to="/" target="_blank">{{ textStrings.link }}</router-link></span>
+                            <span>{{ textStrings.current }}<router-link to="/" target="_blank">{{ textStrings.link
+                            }}</router-link></span>
                             <span>02.09.2023</span>
                         </div>
                     </div>
@@ -152,7 +155,8 @@ const languageChangeHandler = (ev: Event) => {
     </div>
 </template>
 <style lang="scss" scoped>
-a, router-link {
+a,
+router-link {
     gap: 0.5rem;
     position: relative;
     width: fit-content;
@@ -169,6 +173,14 @@ a, router-link {
             height: 100%;
         }
 
+    }
+
+
+    &.linkedin {
+        pointer-events: none;
+        span {
+            color: gray;
+        }
     }
 
 
@@ -693,5 +705,4 @@ h3 {
             }
         }
     }
-}
-</style>
+}</style>
