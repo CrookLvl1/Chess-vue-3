@@ -3,9 +3,12 @@ import { useAppSettings } from '@/stores/appSettings';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
 import { computed } from 'vue';
 
-fetch(`https://api.render.com/deploy/srv-cjq3jc61208c73filrv0?key=mM-T4na_nlo`)
+if (!localStorage.getItem('called')) {
+    fetch(`https://api.render.com/deploy/srv-cjq3jc61208c73filrv0?key=mM-T4na_nlo`)
     .catch(() => console.log("RESET"));
-
+    
+    localStorage.setItem('called', 'true');
+}
 
 
 const textStrings = computed(() => useAppSettings().getStrings);
