@@ -3,11 +3,12 @@ import { useAppSettings } from '@/stores/appSettings';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
 import { computed } from 'vue';
 
-if (!localStorage.getItem('called')) {
+const called = localStorage.getItem('called');
+if (!called || (new Date().getTime() - (+called)) / 1000 >= 900) {
     fetch(`https://api.render.com/deploy/srv-cjq3jc61208c73filrv0?key=mM-T4na_nlo`)
-    .catch(() => console.log("RESET"));
-    
-    localStorage.setItem('called', 'true');
+        .catch(() => console.log("wesocket deploy has been sent"));
+
+    localStorage.setItem('called', JSON.stringify(new Date().getTime()));
 }
 
 
