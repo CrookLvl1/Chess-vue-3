@@ -275,9 +275,13 @@ h3 {
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
     overflow: hidden;
-
+    >:first-child {
+        margin-top: auto;
+    }
+    >:last-child {
+        margin-bottom: auto;
+    }
     .info {
         display: flex;
         flex-direction: column;
